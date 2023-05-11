@@ -18,7 +18,7 @@ pragma solidity ^0.8.20;
 contract MemeToken is ERC20, ERC20Burnable, Ownable {
     uint256 private constant INITIAL_SUPPLY = 69690000000 * 10**18;
 
-    constructor() ERC20("MemeToken", "MEMEE") {
+    constructor() ERC20("MemeToken", "MEME") {
         _mint(msg.sender, INITIAL_SUPPLY);
     }
 
