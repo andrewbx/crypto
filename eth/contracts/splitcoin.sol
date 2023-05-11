@@ -14,7 +14,7 @@ pragma solidity ^0.8.20;
  * @dev Create SplitCoin Token
  * @custom:dev-run-script ./scripts/deploy_with_ethers.ts
  */
-contract SplitToken is Ownable, ERC20 {
+contract SplitCoin is Ownable, ERC20 {
     bool public limited;
     uint256 public maxHoldingAmount;
     uint256 public minHoldingAmount;
