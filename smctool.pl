@@ -118,11 +118,12 @@ sub process_api {
         exit help();
     }
 
-    my $env = query_api( $API_URL, qq{$argv->{request}/$opts->{cid}?contract_addresses=$opts->{address}}
-    );
+    $opts->{address} = lc( $opts->{address} );
+    my $env = query_api( $API_URL,
+        qq{$argv->{request}/$opts->{cid}?contract_addresses=$opts->{address}} );
 
     if ( $env->{result} ) {
-        output_api( $opts->{output}, $env );
+        output_api( $opts->{output}, $env->{result}->{ $opts->{address} } );
     }
     else {
         print "\nNo results found.\n";
