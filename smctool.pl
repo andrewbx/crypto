@@ -123,7 +123,9 @@ sub process_api {
         qq{$argv->{request}/$opts->{cid}?contract_addresses=$opts->{address}} );
 
     if ( $env->{result} ) {
-        output_api( $opts->{output}, $env->{result}->{ $opts->{address} } );
+        $argv->{request} eq q{token_security}
+          ? output_api( $opts->{output}, $env->{result}->{$opts->{address}} )
+          : output_api( $opts->{output}, $env->{result} );
     }
     else {
         print "\nNo results found.\n";
