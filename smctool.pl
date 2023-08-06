@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : smctool.pl
-# Version     : v1.1-STABLE-2023-06-19
+# Version     : v1.2-STABLE-2023-08-06
 # Description : Check Blockchain Smart Contract Health
 # Syntax      : smctool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -15,6 +15,8 @@ use MIME::Base64;
 use Getopt::Long qw/:config no_ignore_case/;
 use Data::Dumper;
 use POSIX;
+use feature qw( switch );
+no warnings qw( experimental::smartmatch );
 
 $Data::Dumper::Terse     = 1;
 $Data::Dumper::Indent    = 1;
@@ -25,10 +27,12 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ":encoding(UTF-8)" );
 
-my $VERSION = "v1.1-STABLE";
+my $VERSION = "v1.2-STABLE";
 my $RELEASE = "smcTOOL $VERSION";
 my $GPL_URL = "https://api.gopluslabs.io/api/v1";
 my $CGO_URL = "https://api.coingecko.com/api/v3";
+my $CAP_URL = "https://api.coincap.io/v2";
+my $LWP_UA  = "Mozilla/5.0";
 
 @ARGV or help();
 
@@ -60,18 +64,24 @@ my $CGO_URL = "https://api.coingecko.com/api/v3";
         exit print("$RELEASE\n");
     }
 
-    if ( $opts{api} and $opts{api} !~ m/^(cgo|gpl)$/i ) {
+    if ( $opts{api} and $opts{api} !~ m/^(cgo|gpl|cap)$/i ) {
         print "API endpoint invalid\n";
         exit help();
     }
 
-    if ( $opts{api} and $opts{api} =~ m/^(cgo|gpl)$/i and !$args{query_api} ) {
+    if ( $opts{api} and $opts{api} =~ m/^(cgo|gpl|cap)$/i and !$args{query_api} ) {
         print "API request expected\n";
         exit help();
     }
 
     if ( $args{query_api} and $opts{api} ) {
-        my $API_URL = lc($opts{api}) eq q{gpl} ? $GPL_URL : $CGO_URL;
+        my $API_URL = q{};
+        given ($opts{api}) {
+            when (q{gpl}) { $API_URL = $GPL_URL; }
+            when (q{cgo}) { $API_URL = $CGO_URL; }
+            when (q{cap}) { $API_URL = $CAP_URL; }
+            default { $API_URL = $CGO_URL; }
+        }
         process_api( \%opts, { api => $API_URL, request => $args{query_api} } );
     }
 
@@ -149,7 +159,7 @@ sub process_api {
 
     $opts->{address} = lc( $opts->{address} );
     my $env = query_api( $argv->{api},
-        qq{$argv->{request}/$opts->{cid}?contract_addresses=$opts->{address}} );
+        "$argv->{request}/$opts->{cid}?contract_addresses=$opts->{address}" );
 
     if ( $env->{result} ) {
         $argv->{request} eq q{token_security}
@@ -172,6 +182,7 @@ sub query_api {
         show_progress => 1
     );
 
+    $ua->default_header("User-Agent" => $LWP_UA);
     my $res = $ua->get( "$url/$argv", );
 
     unless ( $res->is_success ) {
