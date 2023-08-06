@@ -133,6 +133,7 @@ sub help {
 
 GoPlusLabs API Documentation - https://docs.gopluslabs.io/reference/
 Coin Gecko API Documentation - https://www.coingecko.com/en/api/documentation
+Coin Cap API Documentation   - https://docs.coincap.io/
 
 " );
 
