@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : smctool.pl
-# Version     : v1.2-STABLE-2023-08-06
+# Version     : v1.3-STABLE-2023-08-06
 # Description : Check Blockchain Smart Contract Health
 # Syntax      : smctool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -27,11 +27,12 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ":encoding(UTF-8)" );
 
-my $VERSION = "v1.2-STABLE";
+my $VERSION = "v1.3-STABLE";
 my $RELEASE = "smcTOOL $VERSION";
 my $GPL_URL = "https://api.gopluslabs.io/api/v1";
 my $CGO_URL = "https://api.coingecko.com/api/v3";
 my $CAP_URL = "https://api.coincap.io/v2";
+my $DEX_URL = "https://api.dexscreener.com/latest/dex";
 my $LWP_UA  = "Mozilla/5.0";
 
 @ARGV or help();
@@ -64,12 +65,12 @@ my $LWP_UA  = "Mozilla/5.0";
         exit print("$RELEASE\n");
     }
 
-    if ( $opts{api} and $opts{api} !~ m/^(cgo|gpl|cap)$/i ) {
+    if ( $opts{api} and $opts{api} !~ m/^(cgo|gpl|cap|dex)$/i ) {
         print "API endpoint invalid\n";
         exit help();
     }
 
-    if ( $opts{api} and $opts{api} =~ m/^(cgo|gpl|cap)$/i and !$args{query_api} ) {
+    if ( $opts{api} and $opts{api} =~ m/^(cgo|gpl|cap|dex)$/i and !$args{query_api} ) {
         print "API request expected\n";
         exit help();
     }
@@ -77,9 +78,10 @@ my $LWP_UA  = "Mozilla/5.0";
     if ( $args{query_api} and $opts{api} ) {
         my $API_URL = q{};
         given ($opts{api}) {
-            when (q{gpl}) { $API_URL = $GPL_URL; }
-            when (q{cgo}) { $API_URL = $CGO_URL; }
-            when (q{cap}) { $API_URL = $CAP_URL; }
+            when ("gpl") { $API_URL = $GPL_URL; }
+            when ("cgo") { $API_URL = $CGO_URL; }
+            when ("cap") { $API_URL = $CAP_URL; }
+            when ("dex") { $API_URL = $DEX_URL; }
             default { $API_URL = $CGO_URL; }
         }
         process_api( \%opts, { api => $API_URL, request => $args{query_api} } );
@@ -125,15 +127,16 @@ sub help {
   -o|output   <json|dumper>         Output format for API Query. (Default=json)
   -c|cid      <chain id>            Blockchain ID.
   -a|address  <blockhain address>   Smart Contract or Holder address.
-  -i|api      <cgo|gpl>             API Endpoint (gpl=GoPlusLabs, cgo=Coin Gecko)
+  -i|api      <cgo|gpl|cap|dex>     API Endpoint (gpl=GoPlusLabs, cgo=Coin Gecko, cap=Coin Cap, dex=DEX Screener)
   --help                            Print this help information.
   --version                         Print version.
 
 \033[1mReferences:\033[0m
 
-GoPlusLabs API Documentation - https://docs.gopluslabs.io/reference/
-Coin Gecko API Documentation - https://www.coingecko.com/en/api/documentation
-Coin Cap API Documentation   - https://docs.coincap.io/
+GoPlusLabs API Documentation   - https://docs.gopluslabs.io/reference/
+Coin Gecko API Documentation   - https://www.coingecko.com/en/api/documentation
+Coin Cap API Documentation     - https://docs.coincap.io/
+DEX Screener API Documentation - https://docs.dexscreener.com/api/reference
 
 " );
 
