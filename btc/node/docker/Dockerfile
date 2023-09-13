@@ -59,4 +59,4 @@ EXPOSE 8332/tcp
 # Start the bitcoin server.
 
 ENTRYPOINT ["/usr/local/bin/bitcoind"]
-CMD ["-conf=/bitcoin.conf", "-regtest", "-rest=1", "-server=1", "-printtoconsole", "-txindex=1", "-datadir=/btcdata" ]
+CMD ["-conf=/bitcoin.conf", "-regtest", "-rest=1", "-server=1", "-printtoconsole", "-txindex=1", "-datadir=/node/data" ]
