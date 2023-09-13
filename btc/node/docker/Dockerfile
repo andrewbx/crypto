@@ -55,6 +55,7 @@ ADD ./config/bitcoin.conf /bitcoin.conf
 # Expose RPC port.
 
 EXPOSE 8332/tcp
+EXPOSE 8333/tcp
 
 # Start the bitcoin server.
 
