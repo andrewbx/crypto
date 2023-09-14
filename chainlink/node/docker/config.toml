@@ -1,0 +1,49 @@
+[Log]
+
+Level = 'warn'
+JSONConsole = false
+UnixTS = false
+
+[WebServer]
+
+AllowOrigins = '\*'
+SecureCookies = false
+HTTPWriteTimeout = '10s'
+HTTPPort = 6688
+SecureCookies = true
+SessionTimeout = '15m'
+SessionReaperExpiration = '240h'
+HTTPMaxSize = '32768b'
+StartTimeout = '15s'
+ListenIP = '0.0.0.0'
+
+[WebServer.TLS]
+
+HTTPSPort = 0
+
+[WebServer.RateLimit]
+
+Authenticated = 1000
+AuthenticatedPeriod = '1m'
+Unauthenticated = 5
+UnauthenticatedPeriod = '20s'
+
+[[EVM]]
+
+ChainID = '11155111'
+
+[[EVM.Nodes]]
+
+Name = 'chainlinknode'
+WSURL = 'wss://CHANGE_ME_ETH_LOCATION'
+HTTPURL = 'https://CHANGE_ME_ETH_LOCATION'
+
+[Database]
+
+DefaultIdleInTxSessionTimeout = '1h'
+DefaultLockTimeout = '15s'
+DefaultQueryTimeout = '10s'
+LogQueries = false
+MaxIdleConns = 10
+MaxOpenConns = 20
+MigrateOnStartup = true
