@@ -71,33 +71,39 @@ my $TIMEOUT = 15;
         exit help();
     }
 
-    if ( $opts{api} and $opts{api} =~ m/^(cgo|gpl|cap|dex)$/i and !$args{query_api} ) {
+    if (    $opts{api}
+        and $opts{api} =~ m/^(cgo|gpl|cap|dex)$/i
+        and !$args{query_api} )
+    {
         print "API request expected\n";
         exit help();
     }
 
     if ( $args{query_api} and $opts{api} ) {
         my $API_URL = q{};
-        given ($opts{api}) {
+        given ( $opts{api} ) {
             when ("gpl") { $API_URL = $GPL_URL; }
             when ("cgo") { $API_URL = $CGO_URL; }
             when ("cap") { $API_URL = $CAP_URL; }
             when ("dex") { $API_URL = $DEX_URL; }
-            default { $API_URL = $CGO_URL; }
+            default      { $API_URL = $CGO_URL; }
         }
         process_api( \%opts, { api => $API_URL, request => $args{query_api} } );
     }
 
     if ( $args{token_security} ) {
-        process_api( \%opts, { api => $GPL_URL, request => q{token_security} } );
+        process_api( \%opts,
+            { api => $GPL_URL, request => q{token_security} } );
     }
 
     if ( $args{approval_security} ) {
-        process_api( \%opts, { api => $GPL_URL, request => q{approval_security} } );
+        process_api( \%opts,
+            { api => $GPL_URL, request => q{approval_security} } );
     }
 
     if ( $args{rugpull_detect} ) {
-        process_api( \%opts, { api => $GPL_URL, request => q{rugpull_detecting} } );
+        process_api( \%opts,
+            { api => $GPL_URL, request => q{rugpull_detecting} } );
     }
 
     if ( $args{nft_security} ) {
@@ -105,7 +111,8 @@ my $TIMEOUT = 15;
     }
 
     if ( $args{address_security} ) {
-        process_api( \%opts, { api => $GPL_URL, request => q{address_security} } );
+        process_api( \%opts,
+            { api => $GPL_URL, request => q{address_security} } );
     }
 }
 
@@ -168,7 +175,7 @@ sub process_api {
 
     if ( $env->{result} ) {
         $argv->{request} eq q{token_security}
-          ? output_api( $opts->{output}, $env->{result}->{$opts->{address}} )
+          ? output_api( $opts->{output}, $env->{result}->{ $opts->{address} } )
           : output_api( $opts->{output}, $env->{result} );
     }
     else {
@@ -182,18 +189,17 @@ sub process_api {
 sub query_api {
     my ( $url, $argv ) = @_;
 
-    my $ua = LWP::UserAgent->new(
-        ssl_opts      => { verify_hostname => 0, SSL_verify_mode => 0x00 },
-        show_progress => 1
+    my $ua  = LWP::UserAgent->new(
+        agent             => $LWP_UA,
+        protocols_allowed => [ 'http', 'https' ],
+        ssl_opts          => { verify_hostname => 0, SSL_verify_mode => 0x00 },
+        show_progress     => 1,
+        timeout           => $TIMEOUT
     );
-
-    $ua->agent($LWP_UA);
-    $ua->timeout($TIMEOUT);
-    $ua->protocols_allowed( [ 'http', 'https' ] );
 
     my $res = $ua->get(
         "$url/$argv",
-        "Accept" => "*/*",
+        "Accept"        => "*/*",
         "Cache-Control" => "no-cache",
     );
 
