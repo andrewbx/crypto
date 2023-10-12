@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : smctool.pl
-# Version     : v1.3-STABLE-2023-08-06
+# Version     : v1.4-STABLE-2023-10-12
 # Description : Check Blockchain Smart Contract Health
 # Syntax      : smctool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -27,13 +27,14 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ":encoding(UTF-8)" );
 
-my $VERSION = "v1.3-STABLE";
+my $VERSION = "v1.4-STABLE";
 my $RELEASE = "smcTOOL $VERSION";
 my $GPL_URL = "https://api.gopluslabs.io/api/v1";
 my $CGO_URL = "https://api.coingecko.com/api/v3";
 my $CAP_URL = "https://api.coincap.io/v2";
 my $DEX_URL = "https://api.dexscreener.com/latest/dex";
 my $LWP_UA  = "Mozilla/5.0";
+my $TIMEOUT = 15;
 
 @ARGV or help();
 
@@ -119,7 +120,7 @@ sub help {
   --token_security     <-c|--cid -a|--address>  List smart contract attributes
   --approval_security  <-c|--cid -a|--address>  List attributes to identify malicious behaviour
   --rugpull_detect     <-c|--cid -a|--address>  List attributes to identify rug pull behaviour
-  --nft_security       <-c|--cid -a|--address>  List attributes configured for NFT's
+  --nft_security       <-c|--cid -a|--address>  List attributes configured for NFTs
   --address_security   <-c|--cid -a|--address>  Check for malicious address
   --query_api          <request>                Run an API query against an endpoint
 
@@ -186,8 +187,15 @@ sub query_api {
         show_progress => 1
     );
 
-    $ua->default_header("User-Agent" => $LWP_UA);
-    my $res = $ua->get( "$url/$argv", );
+    $ua->agent($LWP_UA);
+    $ua->timeout($TIMEOUT);
+    $ua->protocols_allowed( [ 'http', 'https' ] );
+
+    my $res = $ua->get(
+        "$url/$argv",
+        "Accept" => "*/*",
+        "Cache-Control" => "no-cache",
+    );
 
     unless ( $res->is_success ) {
         exit;
