@@ -189,10 +189,10 @@ sub process_api {
 sub query_api {
     my ( $url, $argv ) = @_;
 
-    my $ua  = LWP::UserAgent->new(
+    my $ua = LWP::UserAgent->new(
         agent             => $LWP_UA,
-        protocols_allowed => [ 'http', 'https' ],
-        ssl_opts          => { verify_hostname => 0, SSL_verify_mode => 0x00 },
+        protocols_allowed => ['https'],
+        ssl_opts          => { verify_hostname => 0, SSL_verify_mode => 0 },
         show_progress     => 1,
         timeout           => $TIMEOUT
     );
