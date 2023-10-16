@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : smctool.pl
-# Version     : v1.5-STABLE-2023-10-16
+# Version     : v1.6-STABLE-2023-10-16
 # Description : Check Blockchain Smart Contract Health
 # Syntax      : smctool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -27,7 +27,7 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ":encoding(UTF-8)" );
 
-my $VERSION = "v1.5-STABLE";
+my $VERSION = "v1.6-STABLE";
 my $RELEASE = "smcTOOL $VERSION";
 my $GPL_URL = "https://api.gopluslabs.io/api/v1";
 my $CGO_URL = "https://api.coingecko.com/api/v3";
@@ -48,12 +48,15 @@ my $TIMEOUT = 15;
         'c|cid=i'           => \$opts{cid},
         'a|address=s'       => \$opts{address},
         'i|api=s'           => \$opts{api},
+        'n|no=n'            => \$opts{no},
+        's|symbol=s'        => \$opts{symbol},
         'query_api=s'       => \$args{query_api},
         'token_security'    => \$args{token_security},
         'approval_security' => \$args{approval_security},
         'rugpull_detect'    => \$args{rugpull_detect},
         'nft_security'      => \$args{nft_security},
         'address_security'  => \$args{address_security},
+        'top_crypto'        => \$args{top_crypto},
         'help'              => \$args{help},
         'version'           => \$args{version}
     ) or help();
@@ -114,6 +117,11 @@ my $TIMEOUT = 15;
         process_api( \%opts,
             { api => $GPL_URL, request => q{address_security} } );
     }
+
+    if ( $args{top_crypto} ) {
+        query_top_crypto( \%opts,
+            { api => $CGO_URL, request => q{top_crypto} } );
+    }
 }
 
 # Output Help Menu.
@@ -129,15 +137,18 @@ sub help {
   --rugpull_detect     <-c|--cid -a|--address>  List attributes to identify rug pull behaviour
   --nft_security       <-c|--cid -a|--address>  List attributes configured for NFTs
   --address_security   <-c|--cid -a|--address>  Check for malicious address
+  --top_crypto         <-n|--no> -s|--symbol>   Get top cryptoassets by market cap
   --query_api          <request>                Run an API query against an endpoint
 
 \033[1mOptions:\033[0m
-  -o|output   <json|dumper>         Output format for API Query. (Default=json)
-  -c|cid      <chain id>            Blockchain ID.
-  -a|address  <blockhain address>   Smart Contract or Holder address.
+  -o|output   <json|dumper>         Output format for API Query (Default=json)
+  -c|cid      <chain id>            Blockchain ID
+  -a|address  <blockhain address>   Smart Contract or Holder address
   -i|api      <cgo|gpl|cap|dex>     API Endpoint (gpl=GoPlusLabs, cgo=Coin Gecko, cap=Coin Cap, dex=DEX Screener)
-  --help                            Print this help information.
-  --version                         Print version.
+  -n|no       <items>               Number of items to display for top cryptoassets
+  -s|symbol   <ticker>              Currency symbol
+  --help                            Print this help information
+  --version                         Print version
 
 \033[1mReferences:\033[0m
 
@@ -222,5 +233,52 @@ sub output_api {
     else {
         my $json = JSON->new;
         print $json->pretty->encode($results);
+    }
+}
+
+# Get top cryptoassets by market cap.
+
+sub query_top_crypto {
+    my ( $opts, $argv ) = @_;
+    my $symbol = q{usd};
+    my $order  = q{market_cap_desc};
+    my $items  = 10;
+
+    if ( $argv->{request} =~ m/top_crypto/i ) {
+        if ( !$opts->{no} ) {
+            $opts->{no} = $items;
+        }
+
+        if ( !$opts->{symbol} ) {
+            $opts->{symbol} = $symbol;
+        }
+
+        my $env = query_api( $argv->{api},
+                "coins/markets?vs_currency=$opts->{symbol}&order=$order"
+              . "&per_page=$opts->{no}&page=1&sparkline=false" );
+
+        if ( length($env) > 0 ) {
+            printf( "\nTop %d Cryptoassets (by market cap) in %s\n\n",
+                $opts->{no}, uc( $opts->{symbol} ) );
+            printf(
+                "Asset      Price          Market Cap           24hr Change\n");
+            printf(
+                "-----      -----          ----------           -----------\n");
+
+            foreach my $item (@$env) {
+                my $f = $item->{current_price} < 0.1 ? q{.6f} : q{.2f};
+                printf(
+                    "%-10s %-14${f} %-20s %.2f%%\n",
+                    uc( $item->{symbol} ),
+                    $item->{current_price},
+                    scalar reverse(
+                        reverse( $item->{market_cap} ) =~
+                          s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr
+                    ),
+                    $item->{price_change_percentage_24h}
+                );
+            }
+        }
+        return;
     }
 }
