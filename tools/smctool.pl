@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : smctool.pl
-# Version     : v1.4-STABLE-2023-10-12
+# Version     : v1.5-STABLE-2023-10-16
 # Description : Check Blockchain Smart Contract Health
 # Syntax      : smctool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -27,7 +27,7 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ":encoding(UTF-8)" );
 
-my $VERSION = "v1.4-STABLE";
+my $VERSION = "v1.5-STABLE";
 my $RELEASE = "smcTOOL $VERSION";
 my $GPL_URL = "https://api.gopluslabs.io/api/v1";
 my $CGO_URL = "https://api.coingecko.com/api/v3";
@@ -197,18 +197,17 @@ sub query_api {
         timeout           => $TIMEOUT
     );
 
-    my $res = $ua->get(
+    my $r = $ua->get(
         "$url/$argv",
         "Accept"        => "*/*",
         "Cache-Control" => "no-cache",
     );
 
-    unless ( $res->is_success ) {
-        exit;
+    unless ( $r->is_success ) {
+        die "Error with API query: " . $r->status_line;
     }
 
-    my $json = decode_json( $res->decoded_content() );
-    return $json;
+    return decode_json( $r->decoded_content() );
 }
 
 # Output API Results.
