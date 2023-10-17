@@ -240,11 +240,12 @@ sub output_api {
 
 sub query_top_crypto {
     my ( $opts, $argv ) = @_;
-    my $symbol = q{usd};
-    my $order  = q{market_cap_desc};
-    my $items  = 10;
 
-    if ( $argv->{request} =~ m/top_crypto/i ) {
+    if ( $argv->{request} eq q{top_crypto} ) {
+        my $symbol = q{usd};
+        my $order  = q{market_cap_desc};
+        my $items  = 10;
+
         if ( !$opts->{no} ) {
             $opts->{no} = $items;
         }
@@ -279,6 +280,5 @@ sub query_top_crypto {
                 );
             }
         }
-        return;
     }
 }
