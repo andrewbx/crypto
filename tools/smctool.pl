@@ -309,27 +309,29 @@ sub query_top_crypto {
             printf( "\nTop %d Cryptoassets (by market cap) in %s\n\n",
                 $opts->{no}, uc( $opts->{symbol} ) );
             print
-              "Asset      Price          Market Cap           24hr Change\n";
+                "No     Asset      Price          Market Cap           24hr Change\n";
             print
-              "-----      -----          ----------           -----------\n";
+                "--     -----      -----          ----------           -----------\n";
 
-            foreach my $item (@$env) {
-                my $f_24hr  = "\e[1;92m%.2f%%\e[0m";
-                my $f_price = $item->{current_price} < 0 ? '.6f' : '.2f';
+            while ( my ( $i, $item ) = each(@$env) ) {
+                $i++;
+                my $p_24hr  = $item->{price_change_percentage_24h} || 0;
+                my $c_price = $item->{current_price}               || 0;
 
-                if ( $item->{price_change_percentage_24h} < 0.00 ) {
-                    $f_24hr = "\e[1;91m%.2f%%\e[0m";
-                }
+                my $f_price = $c_price < 0 ? '.6f' : '.2f';
+                my $f_24hr =
+                    $p_24hr < 0 ? "\e[1;91m%.2f%%\e[0m" : "\e[1;92m%.2f%%\e[0m";
 
                 printf(
-                    "%-10s %-14${f_price} %-20s ${f_24hr}\n",
+                    "%-6d %-10s %-14${f_price} %-20s ${f_24hr}\n",
+                    $i,
                     uc( $item->{symbol} ),
-                    $item->{current_price},
+                    $c_price,
                     scalar reverse(
                         reverse( $item->{market_cap} ) =~
                           s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr
                     ),
-                    $item->{price_change_percentage_24h}
+                    $p_24hr
                 );
             }
         }
