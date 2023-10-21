@@ -16,6 +16,7 @@ use Getopt::Long qw/:config no_ignore_case/;
 use Data::Dumper;
 use POSIX;
 use feature qw( switch );
+use Readonly;
 no warnings qw( experimental::smartmatch );
 
 $Data::Dumper::Terse     = 1;
@@ -25,16 +26,18 @@ $Data::Dumper::Deparse   = 1;
 $Data::Dumper::Quotekeys = 1;
 $Data::Dumper::Sortkeys  = 0;
 
-binmode( STDOUT, ":encoding(UTF-8)" );
+binmode( STDOUT, ':encoding(UTF-8)' );
 
-my $VERSION = "v1.6-STABLE";
+our $VERSION = 'v1.6-STABLE';
 my $RELEASE = "smcTOOL $VERSION";
-my $GPL_URL = "https://api.gopluslabs.io/api/v1";
-my $CGO_URL = "https://api.coingecko.com/api/v3";
-my $CAP_URL = "https://api.coincap.io/v2";
-my $DEX_URL = "https://api.dexscreener.com/latest/dex";
-my $LWP_UA  = "Mozilla/5.0";
-my $TIMEOUT = 15;
+
+my $GPL_URL = 'https://api.gopluslabs.io/api/v1';
+my $CGO_URL = 'https://api.coingecko.com/api/v3';
+my $CAP_URL = 'https://api.coincap.io/v2';
+my $DEX_URL = 'https://api.dexscreener.com/latest/dex';
+my $LWP_UA  = 'Mozilla/5.0';
+
+Readonly::Scalar my $TIMEOUT => 15;
 
 @ARGV or help();
 
@@ -66,17 +69,18 @@ my $TIMEOUT = 15;
     }
 
     if ( $args{version} ) {
-        exit print("$RELEASE\n");
+        print "$RELEASE\n";
+        exit;
     }
 
-    if ( $opts{api} and $opts{api} !~ m/^(cgo|gpl|cap|dex)$/i ) {
+    if ( $opts{api} and $opts{api} !~ m/^cgo|gpl|cap|dex$/i ) {
         print "API endpoint invalid\n";
         exit help();
     }
 
     if (    $opts{api}
-        and $opts{api} =~ m/^(cgo|gpl|cap|dex)$/i
-        and !$args{query_api} )
+        and $opts{api} =~ m/^cgo|gpl|cap|dex$/i
+        and not $args{query_api} )
     {
         print "API request expected\n";
         exit help();
@@ -85,49 +89,85 @@ my $TIMEOUT = 15;
     if ( $args{query_api} and $opts{api} ) {
         my $API_URL = q{};
         given ( $opts{api} ) {
-            when ("gpl") { $API_URL = $GPL_URL; }
-            when ("cgo") { $API_URL = $CGO_URL; }
-            when ("cap") { $API_URL = $CAP_URL; }
-            when ("dex") { $API_URL = $DEX_URL; }
+            when ('gpl') { $API_URL = $GPL_URL; }
+            when ('cgo') { $API_URL = $CGO_URL; }
+            when ('cap') { $API_URL = $CAP_URL; }
+            when ('dex') { $API_URL = $DEX_URL; }
             default      { $API_URL = $CGO_URL; }
         }
-        process_api( \%opts, { api => $API_URL, request => $args{query_api} } );
+        process_api(
+            \%opts,
+            {
+                api     => $API_URL,
+                request => $args{query_api}
+            }
+        );
     }
 
     if ( $args{token_security} ) {
-        process_api( \%opts,
-            { api => $GPL_URL, request => q{token_security} } );
+        process_api(
+            \%opts,
+            {
+                api     => $GPL_URL,
+                request => 'token_security'
+            }
+        );
     }
 
     if ( $args{approval_security} ) {
-        process_api( \%opts,
-            { api => $GPL_URL, request => q{approval_security} } );
+        process_api(
+            \%opts,
+            {
+                api     => $GPL_URL,
+                request => 'approval_security'
+            }
+        );
     }
 
     if ( $args{rugpull_detect} ) {
-        process_api( \%opts,
-            { api => $GPL_URL, request => q{rugpull_detecting} } );
+        process_api(
+            \%opts,
+            {
+                api     => $GPL_URL,
+                request => 'rugpull_detecting'
+            }
+        );
     }
 
     if ( $args{nft_security} ) {
-        process_api( \%opts, { api => $GPL_URL, request => q{nft_security} } );
+        process_api(
+            \%opts,
+            {
+                api     => $GPL_URL,
+                request => 'nft_security'
+            }
+        );
     }
 
     if ( $args{address_security} ) {
-        process_api( \%opts,
-            { api => $GPL_URL, request => q{address_security} } );
+        process_api(
+            \%opts,
+            {
+                api     => $GPL_URL,
+                request => 'address_security'
+            }
+        );
     }
 
     if ( $args{top_crypto} ) {
-        query_top_crypto( \%opts,
-            { api => $CGO_URL, request => q{top_crypto} } );
+        query_top_crypto(
+            \%opts,
+            {
+                api     => $CGO_URL,
+                request => 'top_crypto'
+            }
+        );
     }
 }
 
 # Output Help Menu.
 
 sub help {
-    $0 =~ s{.*/}{};
     printf( "
 \033[1m$RELEASE\033[0m - Retrieve blockchain smart contract information.
 
@@ -172,10 +212,11 @@ sub process_api {
         if ( length($env) > 0 ) {
             output_api( $opts->{output}, $env );
         }
+
         return;
     }
 
-    if ( !$opts->{cid} or !$opts->{address} ) {
+    if ( not $opts->{cid} or not $opts->{address} ) {
         print "Blockchain ID and Smart Contract address expected\n";
         exit help();
     }
@@ -185,14 +226,15 @@ sub process_api {
         "$argv->{request}/$opts->{cid}?contract_addresses=$opts->{address}" );
 
     if ( $env->{result} ) {
-        $argv->{request} eq q{token_security}
+        $argv->{request} eq 'token_security'
           ? output_api( $opts->{output}, $env->{result}->{ $opts->{address} } )
           : output_api( $opts->{output}, $env->{result} );
     }
     else {
         print "\nNo results found.\n";
-        return;
     }
+
+    return;
 }
 
 # Run API Query through LWP.
@@ -203,19 +245,22 @@ sub query_api {
     my $ua = LWP::UserAgent->new(
         agent             => $LWP_UA,
         protocols_allowed => ['https'],
-        ssl_opts          => { verify_hostname => 0, SSL_verify_mode => 0 },
-        show_progress     => 1,
-        timeout           => $TIMEOUT
+        ssl_opts          => {
+            verify_hostname => 0,
+            SSL_verify_mode => 0
+        },
+        show_progress => 1,
+        timeout       => $TIMEOUT
     );
 
     my $r = $ua->get(
         "$url/$argv",
-        "Accept"        => "*/*",
-        "Cache-Control" => "no-cache",
+        'Accept'        => '*/*',
+        'Cache-Control' => 'no-cache',
     );
 
-    unless ( $r->is_success ) {
-        die "Error with API query: " . $r->status_line;
+    if ( not $r->is_success ) {
+        die 'Error with API query: ' . $r->status_line;
     }
 
     return decode_json( $r->decoded_content() );
@@ -227,13 +272,15 @@ sub query_api {
 sub output_api {
     my ( $output, $results ) = @_;
 
-    if ( defined($output) and lc($output) eq q{json} ) {
+    if ( defined($output) and lc($output) eq 'json' ) {
         print Dumper($results);
     }
     else {
         my $json = JSON->new;
         print $json->pretty->encode($results);
     }
+
+    return;
 }
 
 # Get top cryptoassets by market cap.
@@ -241,16 +288,16 @@ sub output_api {
 sub query_top_crypto {
     my ( $opts, $argv ) = @_;
 
-    if ( $argv->{request} eq q{top_crypto} ) {
-        my $symbol = q{usd};
-        my $order  = q{market_cap_desc};
-        my $items  = 10;
+    if ( $argv->{request} eq 'top_crypto' ) {
+        my $symbol = 'usd';
+        my $order  = 'market_cap_desc';
+        Readonly::Scalar my $ITEMS => 10;
 
-        if ( !$opts->{no} ) {
-            $opts->{no} = $items;
+        if ( not $opts->{no} ) {
+            $opts->{no} = $ITEMS;
         }
 
-        if ( !$opts->{symbol} ) {
+        if ( not $opts->{symbol} ) {
             $opts->{symbol} = $symbol;
         }
 
@@ -261,15 +308,21 @@ sub query_top_crypto {
         if ( length($env) > 0 ) {
             printf( "\nTop %d Cryptoassets (by market cap) in %s\n\n",
                 $opts->{no}, uc( $opts->{symbol} ) );
-            printf(
-                "Asset      Price          Market Cap           24hr Change\n");
-            printf(
-                "-----      -----          ----------           -----------\n");
+            print
+              "Asset      Price          Market Cap           24hr Change\n";
+            print
+              "-----      -----          ----------           -----------\n";
 
             foreach my $item (@$env) {
-                my $f = $item->{current_price} < 0.1 ? q{.6f} : q{.2f};
+                my $f_24hr  = "\e[1;92m%.2f%%\e[0m";
+                my $f_price = $item->{current_price} < 0 ? '.6f' : '.2f';
+
+                if ( $item->{price_change_percentage_24h} < 0.00 ) {
+                    $f_24hr = "\e[1;91m%.2f%%\e[0m";
+                }
+
                 printf(
-                    "%-10s %-14${f} %-20s %.2f%%\n",
+                    "%-10s %-14${f_price} %-20s ${f_24hr}\n",
                     uc( $item->{symbol} ),
                     $item->{current_price},
                     scalar reverse(
@@ -281,4 +334,6 @@ sub query_top_crypto {
             }
         }
     }
+
+    return;
 }
