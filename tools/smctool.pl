@@ -318,7 +318,7 @@ sub query_top_crypto {
                 my $p_24hr  = $item->{price_change_percentage_24h} || 0;
                 my $c_price = $item->{current_price}               || 0;
 
-                my $f_price = $c_price < 0 ? '.6f' : '.2f';
+                my $f_price = $c_price < 0.01 ? '.6f' : '.2f';
                 my $f_24hr =
                     $p_24hr < 0 ? "\e[1;91m%.2f%%\e[0m" : "\e[1;92m%.2f%%\e[0m";
 
