@@ -97,8 +97,7 @@ Readonly::Scalar my $TIMEOUT => 15;
         }
         process_api(
             \%opts,
-            {
-                api     => $API_URL,
+            {   api     => $API_URL,
                 request => $args{query_api}
             }
         );
@@ -107,8 +106,7 @@ Readonly::Scalar my $TIMEOUT => 15;
     if ( $args{token_security} ) {
         process_api(
             \%opts,
-            {
-                api     => $GPL_URL,
+            {   api     => $GPL_URL,
                 request => 'token_security'
             }
         );
@@ -117,8 +115,7 @@ Readonly::Scalar my $TIMEOUT => 15;
     if ( $args{approval_security} ) {
         process_api(
             \%opts,
-            {
-                api     => $GPL_URL,
+            {   api     => $GPL_URL,
                 request => 'approval_security'
             }
         );
@@ -127,8 +124,7 @@ Readonly::Scalar my $TIMEOUT => 15;
     if ( $args{rugpull_detect} ) {
         process_api(
             \%opts,
-            {
-                api     => $GPL_URL,
+            {   api     => $GPL_URL,
                 request => 'rugpull_detecting'
             }
         );
@@ -137,8 +133,7 @@ Readonly::Scalar my $TIMEOUT => 15;
     if ( $args{nft_security} ) {
         process_api(
             \%opts,
-            {
-                api     => $GPL_URL,
+            {   api     => $GPL_URL,
                 request => 'nft_security'
             }
         );
@@ -147,8 +142,7 @@ Readonly::Scalar my $TIMEOUT => 15;
     if ( $args{address_security} ) {
         process_api(
             \%opts,
-            {
-                api     => $GPL_URL,
+            {   api     => $GPL_URL,
                 request => 'address_security'
             }
         );
@@ -157,8 +151,7 @@ Readonly::Scalar my $TIMEOUT => 15;
     if ( $args{top_crypto} ) {
         query_top_crypto(
             \%opts,
-            {
-                api     => $CGO_URL,
+            {   api     => $CGO_URL,
                 request => 'top_crypto'
             }
         );
@@ -227,8 +220,9 @@ sub process_api {
 
     if ( $env->{result} ) {
         $argv->{request} eq 'token_security'
-          ? output_api( $opts->{output}, $env->{result}->{ $opts->{address} } )
-          : output_api( $opts->{output}, $env->{result} );
+            ? output_api( $opts->{output},
+            $env->{result}->{ $opts->{address} } )
+            : output_api( $opts->{output}, $env->{result} );
     }
     else {
         print "\nNo results found.\n";
@@ -249,7 +243,7 @@ sub query_api {
             verify_hostname => 0,
             SSL_verify_mode => 0
         },
-        show_progress => 1,
+        show_progress => 0,
         timeout       => $TIMEOUT
     );
 
@@ -291,7 +285,8 @@ sub query_top_crypto {
     if ( $argv->{request} eq 'top_crypto' ) {
         my $symbol = 'usd';
         my $order  = 'market_cap_desc';
-        Readonly::Scalar my $ITEMS => 10;
+        Readonly::Scalar my $ITEMS  => 10;
+        Readonly::Scalar my $OFFSET => 0.01;
 
         if ( not $opts->{no} ) {
             $opts->{no} = $ITEMS;
@@ -301,11 +296,34 @@ sub query_top_crypto {
             $opts->{symbol} = $symbol;
         }
 
-        my $env = query_api( $argv->{api},
-                "coins/markets?vs_currency=$opts->{symbol}&order=$order"
-              . "&per_page=$opts->{no}&page=1&sparkline=false" );
+        my ( $tmc, $btc_mc, $btc_d )
+            = get_cap_summary(
+            { id => 'bitcoin', symbol => $opts->{symbol}, api => $CGO_URL } );
 
-        if ( length($env) > 0 ) {
+        my $env = query_api( $argv->{api},
+                  "coins/markets?vs_currency=$opts->{symbol}&order=$order"
+                . "&per_page=$opts->{no}&page=1&sparkline=false" );
+
+        if ( length($env) > 1 ) {
+            if ( length($tmc) > 1 ) {
+                printf(
+                    "Total Market Cap (%s): %s\n",
+                    uc( $opts->{symbol} ),
+                    commars($tmc)
+                );
+                printf(
+                    "Bitcoin Market Cap (%s): %s\n",
+                    uc( $opts->{symbol} ),
+                    commars($btc_mc)
+                );
+                printf(
+                    "Altcoin Market Cap (%s): %s\n",
+                    uc( $opts->{symbol} ),
+                    commars( $tmc - $btc_mc )
+                );
+                printf( "Bitcoin Dominance : %.2f%%\n", $btc_d );
+            }
+
             printf( "\nTop %d Cryptoassets (by market cap) in %s\n\n",
                 $opts->{no}, uc( $opts->{symbol} ) );
             print
@@ -318,24 +336,74 @@ sub query_top_crypto {
                 my $p_24hr  = $item->{price_change_percentage_24h} || 0;
                 my $c_price = $item->{current_price}               || 0;
 
-                my $f_price = $c_price < 0.01 ? '.6f' : '.2f';
-                my $f_24hr =
-                    $p_24hr < 0 ? "\e[1;91m%.2f%%\e[0m" : "\e[1;92m%.2f%%\e[0m";
+                my $f_price = $c_price < $OFFSET ? '.6f' : '.2f';
+                my $f_24hr
+                    = $p_24hr < 0
+                    ? "\e[1;91m%.2f%%\e[0m"
+                    : "\e[1;92m%.2f%%\e[0m";
 
                 printf(
                     "%-6d %-10s %-14${f_price} %-20s ${f_24hr}\n",
-                    $i,
-                    uc( $item->{symbol} ),
-                    $c_price,
-                    scalar reverse(
-                        reverse( $item->{market_cap} ) =~
-                          s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr
-                    ),
-                    $p_24hr
+                    $i, uc( $item->{symbol} ),
+                    $c_price, commars( $item->{market_cap} ), $p_24hr
                 );
             }
         }
     }
 
     return;
+}
+
+sub get_cap_summary {
+    my ($argv) = @_;
+    my $symbol = lc( $argv->{symbol} );
+
+    my $btc_market_cap = get_mc(
+        { api => $argv->{api}, id => $argv->{id}, symbol => $symbol } );
+    my $total_market_cap
+        = get_tmc( { api => $argv->{api}, symbol => $symbol } );
+
+    return ( floor($total_market_cap),
+        floor($btc_market_cap),
+        sprintf( '%.2f', $btc_market_cap / $total_market_cap ) );
+}
+
+# Get total market cap.
+
+sub get_tmc {
+    my ($argv) = @_;
+    my $symbol = lc( $argv->{symbol} );
+
+    my $tmc = query_api( $argv->{api}, 'global' );
+
+    return ( $tmc->{data}->{total_market_cap}->{$symbol} );
+}
+
+# Get market cap.
+
+sub get_mc {
+    my ($argv) = @_;
+    my $symbol = lc( $argv->{symbol} );
+
+    my $mc = query_api( $argv->{api}, "coins/$argv->{id}" );
+
+    return ( $mc->{market_data}->{market_cap}->{$symbol} );
+}
+
+# Get coin dominance.
+
+sub get_cd {
+    my ($argv) = @_;
+
+    return ( sprintf( '%.2f', $argv->{cmc} / $argv->{tmc} ) );
+}
+
+# Add commars to price.
+
+sub commars {
+    my ($argv) = @_;
+
+    return (
+        scalar
+            reverse( reverse($argv) =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr ) );
 }
