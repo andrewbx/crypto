@@ -400,7 +400,7 @@ sub get_cd {
     return ( sprintf( '%.2f', $argv->{cmc} / $argv->{tmc} ) );
 }
 
-# Add commars to price.
+# Add formatting to price.
 
 sub commas {
     my ($argv) = @_;
