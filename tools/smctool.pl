@@ -309,19 +309,19 @@ sub query_top_crypto {
                 printf(
                     "Total Market Cap (%s): %s\n",
                     uc( $opts->{symbol} ),
-                    commars($tmc)
+                    commas($tmc)
                 );
                 printf(
                     "Bitcoin Market Cap (%s): %s\n",
                     uc( $opts->{symbol} ),
-                    commars($btc_mc)
+                    commas($btc_mc)
                 );
                 printf(
                     "Altcoin Market Cap (%s): %s\n",
                     uc( $opts->{symbol} ),
-                    commars( $tmc - $btc_mc )
+                    commas( $tmc - $btc_mc )
                 );
-                printf( "Bitcoin Dominance : %.2f%%\n", $btc_d );
+                printf( "Bitcoin Dominance : \e[1;97m%.2f%%\e[0m\n", $btc_d );
             }
 
             printf( "\nTop %d Cryptoassets (by market cap) in %s\n\n",
@@ -345,7 +345,7 @@ sub query_top_crypto {
                 printf(
                     "%-6d %-10s %-14${f_price} %-20s ${f_24hr}\n",
                     $i, uc( $item->{symbol} ),
-                    $c_price, commars( $item->{market_cap} ), $p_24hr
+                    $c_price, commas( $item->{market_cap} ), $p_24hr
                 );
             }
         }
@@ -402,7 +402,7 @@ sub get_cd {
 
 # Add commars to price.
 
-sub commars {
+sub commas {
     my ($argv) = @_;
 
     return (
