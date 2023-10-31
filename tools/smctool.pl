@@ -324,8 +324,11 @@ sub query_top_crypto {
                 printf( "Bitcoin Dominance : \e[1;97m%.2f%%\e[0m\n", $btc_d );
             }
 
-            printf( "\nTop %d Cryptoassets (by market cap) in %s\n\n",
+            my $localtime = localtime();
+            printf(
+                "\nTop %d Cryptoassets (by market cap) in %s ($localtime)\n\n",
                 $opts->{no}, uc( $opts->{symbol} ) );
+
             print
                 "No     Asset      Price          Market Cap           24hr Change\n";
             print
