@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : smctool.pl
-# Version     : v1.8-STABLE-2023-10-30
+# Version     : v1.9-STABLE-2023-11-10
 # Description : Check Blockchain Smart Contract Health
 # Syntax      : smctool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -149,7 +149,7 @@ Readonly::Scalar my $TIMEOUT => 15;
     }
 
     if ( $args{top_crypto} ) {
-        query_top_crypto(
+        get_top_crypto(
             \%opts,
             {   api     => $CGO_URL,
                 request => 'top_crypto'
@@ -279,7 +279,7 @@ sub output_api {
 
 # Get top cryptoassets by market cap.
 
-sub query_top_crypto {
+sub get_top_crypto {
     my ( $opts, $argv ) = @_;
 
     if ( $argv->{request} eq 'top_crypto' ) {
@@ -296,30 +296,30 @@ sub query_top_crypto {
             $opts->{symbol} = $symbol;
         }
 
-        my ( $tmc, $btc_mc, $btc_d )
-            = get_cap_summary(
-            { id => 'bitcoin', symbol => $opts->{symbol}, api => $CGO_URL } );
-
         my $env = query_api( $argv->{api},
                   "coins/markets?vs_currency=$opts->{symbol}&order=$order"
                 . "&per_page=$opts->{no}&page=1&sparkline=false" );
 
         if ( length($env) > 1 ) {
+            my ( $tmc, $btc_mc, $btc_d )
+                = get_cap_summary(
+                { id => 'bitcoin', symbol => $opts->{symbol}, api => $CGO_URL } );
+
             if ( length($tmc) > 1 ) {
                 printf(
                     "Total Market Cap (%s): %s\n",
                     uc( $opts->{symbol} ),
-                    commas($tmc)
+                    comma($tmc)
                 );
                 printf(
                     "Bitcoin Market Cap (%s): %s\n",
                     uc( $opts->{symbol} ),
-                    commas($btc_mc)
+                    comma($btc_mc)
                 );
                 printf(
                     "Altcoin Market Cap (%s): %s\n",
                     uc( $opts->{symbol} ),
-                    commas( $tmc - $btc_mc )
+                    comma( $tmc - $btc_mc )
                 );
                 printf( "Bitcoin Dominance : \e[1;97m%.2f%%\e[0m\n", $btc_d );
             }
@@ -348,7 +348,7 @@ sub query_top_crypto {
                 printf(
                     "%-6d %-10s %-14${f_price} %-20s ${f_24hr}\n",
                     $i, uc( $item->{symbol} ),
-                    $c_price, commas( $item->{market_cap} ), $p_24hr
+                    $c_price, comma( $item->{market_cap} ), $p_24hr
                 );
             }
         }
@@ -405,7 +405,7 @@ sub get_cd {
 
 # Add formatting to price.
 
-sub commas {
+sub comma {
     my ($argv) = @_;
 
     return (
