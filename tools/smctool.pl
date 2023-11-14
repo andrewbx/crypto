@@ -36,6 +36,7 @@ my $CGO_URL = 'https://api.coingecko.com/api/v3';
 my $CAP_URL = 'https://api.coincap.io/v2';
 my $DEX_URL = 'https://api.dexscreener.com/latest/dex';
 my $LWP_UA  = 'Mozilla/5.0';
+my $DEBUG   = 0;
 
 Readonly::Scalar my $TIMEOUT => 15;
 
@@ -60,9 +61,14 @@ Readonly::Scalar my $TIMEOUT => 15;
         'nft_security'      => \$args{nft_security},
         'address_security'  => \$args{address_security},
         'top_crypto'        => \$args{top_crypto},
+        'debug'             => \$args{debug},
         'help'              => \$args{help},
         'version'           => \$args{version}
     ) or help();
+
+    if ( $args{debug} ) {
+        $DEBUG = 1;
+    }
 
     if ( $args{help} ) {
         exit help();
@@ -180,6 +186,7 @@ sub help {
   -i|api      <cgo|gpl|cap|dex>     API Endpoint (gpl=GoPlusLabs, cgo=Coin Gecko, cap=Coin Cap, dex=DEX Screener)
   -n|no       <items>               Number of items to display for top cryptoassets
   -s|symbol   <ticker>              Currency symbol
+  --debug                           Enable verbose mode
   --help                            Print this help information
   --version                         Print version
 
@@ -243,7 +250,7 @@ sub query_api {
             verify_hostname => 0,
             SSL_verify_mode => 0
         },
-        show_progress => 0,
+        show_progress => $DEBUG,
         timeout       => $TIMEOUT
     );
 
@@ -301,9 +308,12 @@ sub get_top_crypto {
                 . "&per_page=$opts->{no}&page=1&sparkline=false" );
 
         if ( length($env) > 1 ) {
-            my ( $tmc, $btc_mc, $btc_d )
-                = get_cap_summary(
-                { id => 'bitcoin', symbol => $opts->{symbol}, api => $CGO_URL } );
+            my ( $tmc, $btc_mc, $btc_d ) = get_cap_summary(
+                {   id     => 'bitcoin',
+                    symbol => $opts->{symbol},
+                    api    => $CGO_URL
+                }
+            );
 
             if ( length($tmc) > 1 ) {
                 printf(
@@ -330,25 +340,29 @@ sub get_top_crypto {
                 $opts->{no}, uc( $opts->{symbol} ) );
 
             print
-                "No     Asset      Price          Market Cap           24hr Change\n";
+                "No     Asset      Price          Market Cap           24hr C(%)   ATH            ATH C(%)\n";
             print
-                "--     -----      -----          ----------           -----------\n";
+                "--     -----      -----          ----------           ---------   ---            --------\n";
 
             while ( my ( $i, $item ) = each(@$env) ) {
                 $i++;
+                my $c_ath   = $item->{ath}                   || 0;
+                my $p_ath_c = $item->{ath_change_percentage} || 0;
+
                 my $p_24hr  = $item->{price_change_percentage_24h} || 0;
                 my $c_price = $item->{current_price}               || 0;
 
                 my $f_price = $c_price < $OFFSET ? '.6f' : '.2f';
-                my $f_24hr
-                    = $p_24hr < 0
-                    ? "\e[1;91m%.2f%%\e[0m"
-                    : "\e[1;92m%.2f%%\e[0m";
+                my $f_ath   = $c_ath < $OFFSET   ? '.6f' : '.2f';
+
+                my $f_24hr  = colourise( { value => $p_24hr } );
+                my $f_ath_c = colourise( { value => $p_ath_c } );
 
                 printf(
-                    "%-6d %-10s %-14${f_price} %-20s ${f_24hr}\n",
-                    $i, uc( $item->{symbol} ),
-                    $c_price, comma( $item->{market_cap} ), $p_24hr
+                    "%-6d %-10s %-14${f_price} %-20s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
+                    $i,       uc( $item->{symbol} ),
+                    $c_price, comma( $item->{market_cap} ),
+                    $p_24hr,  $c_ath, $p_ath_c
                 );
             }
         }
@@ -370,7 +384,7 @@ sub get_cap_summary {
 
     return ( floor($total_market_cap),
         floor($btc_market_cap),
-        sprintf( '%.2f', $btc_market_cap / $total_market_cap ) );
+        get_cd( { cmc => $btc_market_cap, tmc => $total_market_cap } ) );
 }
 
 # Get total market cap.
@@ -411,4 +425,12 @@ sub comma {
     return (
         scalar
             reverse( reverse($argv) =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr ) );
+}
+
+sub colourise {
+    my ($argv) = @_;
+
+    return ( $argv->{value} < 0
+        ? "\e[1;91m%-11.2f\e[0m"
+        : "\e[1;92m%-11.2f\e[0m" );
 }
