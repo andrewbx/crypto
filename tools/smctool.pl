@@ -331,7 +331,7 @@ sub get_top_crypto {
                     uc( $opts->{symbol} ),
                     comma( $tmc - $btc_mc )
                 );
-                printf( "Bitcoin Dominance : \e[1;97m%.2f%%\e[0m\n", $btc_d );
+                printf( "Bitcoin Dominance : \e[1;97m%.3f%%\e[0m\n", $btc_d );
             }
 
             my $localtime = localtime();
@@ -414,7 +414,7 @@ sub get_mc {
 sub get_cd {
     my ($argv) = @_;
 
-    return ( sprintf( '%.2f', $argv->{cmc} / $argv->{tmc} ) );
+    return ( $argv->{cmc} / $argv->{tmc} );
 }
 
 # Add formatting to price.
