@@ -176,7 +176,7 @@ sub help {
   --rugpull_detect     <-c|--cid -a|--address>  List attributes to identify rug pull behaviour
   --nft_security       <-c|--cid -a|--address>  List attributes configured for NFTs
   --address_security   <-c|--cid -a|--address>  Check for malicious address
-  --top_crypto         <-n|--no> -s|--symbol>   Get top cryptoassets by market cap
+  --top_crypto         <-n|--num -s|--symbol>   Get top cryptoassets by market cap
   --query_api          <request>                Run an API query against an endpoint
 
 \033[1mOptions:\033[0m
@@ -184,7 +184,7 @@ sub help {
   -c|cid      <chain id>            Blockchain ID
   -a|address  <blockhain address>   Smart Contract or Holder address
   -i|api      <cgo|gpl|cap|dex>     API Endpoint (gpl=GoPlusLabs, cgo=Coin Gecko, cap=Coin Cap, dex=DEX Screener)
-  -n|no       <items>               Number of items to display for top cryptoassets
+  -n|num      <items>               Number of items to display for top cryptoassets
   -s|symbol   <ticker>              Currency symbol
   --debug                           Enable verbose mode
   --help                            Print this help information
