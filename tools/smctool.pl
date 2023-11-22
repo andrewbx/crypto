@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : smctool.pl
-# Version     : v1.9-STABLE-2023-11-10
+# Version     : v1.10-STABLE-2023-11-22
 # Description : Check Blockchain Smart Contract Health
 # Syntax      : smctool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -28,7 +28,7 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ':encoding(UTF-8)' );
 
-our $VERSION = 'v1.8-STABLE';
+our $VERSION = 'v1.10-STABLE';
 my $RELEASE = "smcTOOL $VERSION";
 
 my $GPL_URL = 'https://api.gopluslabs.io/api/v1';
@@ -355,8 +355,8 @@ sub get_top_crypto {
                 my $f_price = $c_price < $OFFSET ? '.6f' : '.2f';
                 my $f_ath   = $c_ath < $OFFSET   ? '.6f' : '.2f';
 
-                my $f_24hr  = colourise( { value => $p_24hr } );
-                my $f_ath_c = colourise( { value => $p_ath_c } );
+                my $f_24hr  = colour( { value => $p_24hr } );
+                my $f_ath_c = colour( { value => $p_ath_c } );
 
                 printf(
                     "%-6d %-10s %-14${f_price} %-20s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
@@ -427,7 +427,9 @@ sub comma {
             reverse( reverse($argv) =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr ) );
 }
 
-sub colourise {
+# Price highlighting.
+
+sub colour {
     my ($argv) = @_;
 
     return ( $argv->{value} < 0
