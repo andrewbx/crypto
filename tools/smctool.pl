@@ -411,10 +411,14 @@ sub get_top_crypto {
                 {
                     printf(
                         "%-6d %-10s %-14${f_price} %-20s %-20s %-20s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
-                        $i,                      uc( $item->{symbol} ),
-                        $c_price,                comma( int($m_cap) ),
-                        comma( int($c_supply) ), comma( int($t_supply) ),
-                        $p_24hr,                 $c_ath,
+                        $i,
+                        uc( $item->{symbol} ),
+                        $c_price,
+                        comma( int($m_cap) ),
+                        comma( int($c_supply) ),
+                        comma( int($t_supply) ) || q{N/A},
+                        $p_24hr,
+                        $c_ath,
                         $p_ath_c
                     );
                 }
