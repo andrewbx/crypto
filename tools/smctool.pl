@@ -54,6 +54,7 @@ Readonly::Scalar my $TIMEOUT => 15;
         'i|api=s'           => \$opts{api},
         'n|no=n'            => \$opts{no},
         's|symbol=s'        => \$opts{symbol},
+        'p|percent=i'       => \$opts{percent},
         'query_api=s'       => \$args{query_api},
         'token_security'    => \$args{token_security},
         'approval_security' => \$args{approval_security},
@@ -294,6 +295,8 @@ sub get_top_crypto {
         my $order  = 'market_cap_desc';
         Readonly::Scalar my $ITEMS  => 10;
         Readonly::Scalar my $OFFSET => 0.01;
+        Readonly::Scalar my $MAXRPP => 250;
+        Readonly::Scalar my $SLEEP  => 2;
 
         if ( not $opts->{no} ) {
             $opts->{no} = $ITEMS;
@@ -303,9 +306,31 @@ sub get_top_crypto {
             $opts->{symbol} = $symbol;
         }
 
-        my $env = query_api( $argv->{api},
-                  "coins/markets?vs_currency=$opts->{symbol}&order=$order"
-                . "&per_page=$opts->{no}&page=1&sparkline=false" );
+        my $env      = q{};
+        my $per_page = $opts->{no};
+        my $delay    = 0;
+
+        if ( $opts->{no} > $MAXRPP ) {
+            $per_page = $MAXRPP;
+            $delay    = $SLEEP;
+        }
+
+        my $page_count = $opts->{no} / $per_page;
+        my $remainder = $opts->{no} % $per_page ? $page_count++ : $page_count;
+
+        my ( @a, @b ) = ();
+
+        for my $i ( 1 .. $page_count ) {
+            $a = query_api( $argv->{api},
+                      "coins/markets?vs_currency=$opts->{symbol}&order=$order"
+                    . "&per_page=$per_page&page=$i&sparkline=false" );
+            printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
+                $i, $page_count, $delay );
+            push( @b, @$a );
+            sleep $sleep;
+        }
+
+        $env = \@b;
 
         if ( length($env) > 1 ) {
             my ( $tmc, $btc_mc, $btc_d ) = get_cap_summary(
@@ -345,7 +370,9 @@ sub get_top_crypto {
                 "--     -----      -----          ----------           ---------   ---            --------\n";
 
             while ( my ( $i, $item ) = each(@$env) ) {
+                return unless $i < $opts->{no};
                 $i++;
+
                 my $c_ath   = $item->{ath}                   || 0;
                 my $p_ath_c = $item->{ath_change_percentage} || 0;
 
@@ -358,12 +385,32 @@ sub get_top_crypto {
                 my $f_24hr  = colour( { value => $p_24hr } );
                 my $f_ath_c = colour( { value => $p_ath_c } );
 
-                printf(
-                    "%-6d %-10s %-14${f_price} %-20s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
-                    $i,       uc( $item->{symbol} ),
-                    $c_price, comma( $item->{market_cap} ),
-                    $p_24hr,  $c_ath, $p_ath_c
-                );
+                my $match   = 0;
+                my $default = 1;
+
+                if ( defined( $opts->{percent} ) ) {
+                    $default = 0;
+
+                    if ( int($p_24hr) >= int( $opts->{percent} ) ) {
+                        $match = 1;
+                    }
+                    else {
+                        $match = 0;
+                    }
+                }
+
+                if (( $match eq 1 and $default eq 0 )
+                    || (    $match eq 0
+                        and $default eq 1 )
+                    )
+                {
+                    printf(
+                        "%-6d %-10s %-14${f_price} %-20s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
+                        $i,       uc( $item->{symbol} ),
+                        $c_price, comma( $item->{market_cap} ),
+                        $p_24hr,  $c_ath, $p_ath_c
+                    );
+                }
             }
         }
     }
@@ -432,7 +479,9 @@ sub comma {
 sub colour {
     my ($argv) = @_;
 
-    return ( $argv->{value} < 0
+    return (
+        $argv->{value} < 0
         ? "\e[1;91m%-11.2f\e[0m"
-        : "\e[1;92m%-11.2f\e[0m" );
+        : "\e[1;92m%-11.2f\e[0m"
+    );
 }
