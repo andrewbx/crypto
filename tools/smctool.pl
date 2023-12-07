@@ -187,6 +187,7 @@ sub help {
   -i|api      <cgo|gpl|cap|dex>     API Endpoint (gpl=GoPlusLabs, cgo=Coin Gecko, cap=Coin Cap, dex=DEX Screener)
   -n|num      <items>               Number of items to display for top cryptoassets
   -s|symbol   <ticker>              Currency symbol
+  -p|percent  <24hr percentage>     Filter results by percentage value
   --debug                           Enable verbose mode
   --help                            Print this help information
   --version                         Print version
@@ -327,7 +328,7 @@ sub get_top_crypto {
             printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
                 $i, $page_count, $delay );
             push( @b, @$a );
-            sleep $sleep;
+            sleep $delay;
         }
 
         $env = \@b;
