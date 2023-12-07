@@ -366,15 +366,19 @@ sub get_top_crypto {
                 $opts->{no}, uc( $opts->{symbol} ) );
 
             print
-                "No     Asset      Price          Market Cap           24hr C(%)   ATH            ATH C(%)\n";
+                "No     Asset      Price          Market Cap           Circ Supply          Total Supply         24hr C(%)   ATH            ATH C(%)\n";
             print
-                "--     -----      -----          ----------           ---------   ---            --------\n";
+                "--     -----      -----          ----------           -----------          ------------         ---------   ---            --------\n";
 
             while ( my ( $i, $item ) = each(@$env) ) {
                 return unless $i < $opts->{no};
                 $i++;
 
-                my $c_ath   = $item->{ath}                   || 0;
+                my $m_cap = $item->{market_cap} || 0,
+                    my $c_supply = $item->{circulating_supply} || 0,
+                    my $t_supply = $item->{total_supply} || 0,
+
+                    my $c_ath = $item->{ath} || 0;
                 my $p_ath_c = $item->{ath_change_percentage} || 0;
 
                 my $p_24hr  = $item->{price_change_percentage_24h} || 0;
@@ -406,10 +410,12 @@ sub get_top_crypto {
                     )
                 {
                     printf(
-                        "%-6d %-10s %-14${f_price} %-20s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
-                        $i,       uc( $item->{symbol} ),
-                        $c_price, comma( $item->{market_cap} ),
-                        $p_24hr,  $c_ath, $p_ath_c
+                        "%-6d %-10s %-14${f_price} %-20s %-20s %-20s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
+                        $i,                      uc( $item->{symbol} ),
+                        $c_price,                comma( int($m_cap) ),
+                        comma( int($c_supply) ), comma( int($t_supply) ),
+                        $p_24hr,                 $c_ath,
+                        $p_ath_c
                     );
                 }
             }
@@ -423,8 +429,11 @@ sub get_top_crypto {
 
 sub get_cap_summary {
     my ($argv) = @_;
-    my $symbol = lc( $argv->{symbol} );
 
+    return
+        if ( not $argv );
+
+    my $symbol         = lc( $argv->{symbol} );
     my $btc_market_cap = get_mc(
         { api => $argv->{api}, id => $argv->{id}, symbol => $symbol } );
     my $total_market_cap
@@ -439,9 +448,12 @@ sub get_cap_summary {
 
 sub get_tmc {
     my ($argv) = @_;
-    my $symbol = lc( $argv->{symbol} );
 
-    my $tmc = query_api( $argv->{api}, 'global' );
+    return
+        if ( not $argv );
+
+    my $symbol = lc( $argv->{symbol} );
+    my $tmc    = query_api( $argv->{api}, 'global' );
 
     return ( $tmc->{data}->{total_market_cap}->{$symbol} );
 }
@@ -450,9 +462,12 @@ sub get_tmc {
 
 sub get_mc {
     my ($argv) = @_;
-    my $symbol = lc( $argv->{symbol} );
 
-    my $mc = query_api( $argv->{api}, "coins/$argv->{id}" );
+    return
+        if ( not $argv );
+
+    my $symbol = lc( $argv->{symbol} );
+    my $mc     = query_api( $argv->{api}, "coins/$argv->{id}" );
 
     return ( $mc->{market_data}->{market_cap}->{$symbol} );
 }
@@ -462,7 +477,7 @@ sub get_mc {
 sub get_cd {
     my ($argv) = @_;
 
-    return ( $argv->{cmc} / $argv->{tmc} );
+    return ( $argv->{cmc} / $argv->{tmc} ) if ($argv);
 }
 
 # Add formatting to price.
@@ -471,8 +486,8 @@ sub comma {
     my ($argv) = @_;
 
     return (
-        scalar
-            reverse( reverse($argv) =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr ) );
+        scalar reverse( reverse($argv) =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr ) )
+        if ($argv);
 }
 
 # Price highlighting.
@@ -484,5 +499,5 @@ sub colour {
         $argv->{value} < 0
         ? "\e[1;91m%-11.2f\e[0m"
         : "\e[1;92m%-11.2f\e[0m"
-    );
+    ) if ($argv);
 }
