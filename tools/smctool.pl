@@ -375,10 +375,10 @@ sub get_top_crypto {
                 $i++;
 
                 my $m_cap = $item->{market_cap} || 0,
-                    my $c_supply = $item->{circulating_supply} || 0,
-                    my $t_supply = $item->{total_supply} || 0,
+                my $c_supply = $item->{circulating_supply} || 0,
+                my $t_supply = $item->{total_supply} || 0,
 
-                    my $c_ath = $item->{ath} || 0;
+                my $c_ath = $item->{ath} || 0;
                 my $p_ath_c = $item->{ath_change_percentage} || 0;
 
                 my $p_24hr  = $item->{price_change_percentage_24h} || 0;
