@@ -383,9 +383,9 @@ sub get_top_crypto {
             }
 
             print
-                "No     Asset      Price          Market Cap           Circ Supply          Total Supply         24hr C(%)   ATH            ATH C(%)\n";
+                "No     Asset      Price          Market Cap           Circ Supply          Total Supply         24hr Volume        24hr C(%)   ATH            ATH C(%)\n";
             print
-                "--     -----      -----          ----------           -----------          ------------         ---------   ---            --------\n";
+                "--     -----      -----          ----------           -----------          ------------         -----------        ---------   ---            --------\n";
 
             while ( my ( $i, $item ) = each(@$env) ) {
                 return unless $i < $opts->{no};
@@ -394,6 +394,7 @@ sub get_top_crypto {
                 my $m_cap    = $item->{market_cap}         || 0;
                 my $c_supply = $item->{circulating_supply} || 0;
                 my $t_supply = $item->{total_supply}       || 0;
+                my $t_volume = $item->{total_volume}       || 0;
 
                 my $c_ath   = $item->{ath}                   || 0;
                 my $p_ath_c = $item->{ath_change_percentage} || 0;
@@ -427,13 +428,14 @@ sub get_top_crypto {
                     )
                 {
                     printf(
-                        "%-6d %-10s %-14${f_price} %-20s %-20s %-20s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
+                        "%-6d %-10s %-14${f_price} %-20s %-20s %-20s %-18s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
                         $i,
                         uc( $item->{symbol} ),
                         $c_price,
                         comma( int($m_cap) ),
                         comma( int($c_supply) ),
                         comma( int($t_supply) ) || q{N/A},
+                        comma( int($t_volume) ),
                         $p_24hr,
                         $c_ath,
                         $p_ath_c
