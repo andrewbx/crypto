@@ -324,7 +324,8 @@ sub get_top_crypto {
         for my $i ( 1 .. $page_count ) {
             $a = query_api( $argv->{api},
                       "coins/markets?vs_currency=$opts->{symbol}&order=$order"
-                    . "&per_page=$per_page&page=$i&sparkline=false" );
+                    . "&per_page=$per_page&page=$i&sparkline=false"
+                    . "&price_change_percentage=1h%2C24h%2C7d" );
             if ( $DEBUG eq 1 ) {
                 printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
                     $i, $page_count, $delay );
@@ -383,9 +384,9 @@ sub get_top_crypto {
             }
 
             print
-                "No     Asset      Price          Market Cap           Circ Supply          Total Supply         24hr Volume        24hr C(%)   ATH            ATH C(%)\n";
+                "No     Asset      Price          Market Cap           Circ Supply          Total Supply         1hr C(%)    24hr C(%)   7d C(%)     ATH            ATH C(%)\n";
             print
-                "--     -----      -----          ----------           -----------          ------------         -----------        ---------   ---            --------\n";
+                "--     -----      -----          ----------           -----------          ------------         --------    ---------   -------     ---            --------\n";
 
             while ( my ( $i, $item ) = each(@$env) ) {
                 return unless $i < $opts->{no};
@@ -394,18 +395,22 @@ sub get_top_crypto {
                 my $m_cap    = $item->{market_cap}         || 0;
                 my $c_supply = $item->{circulating_supply} || 0;
                 my $t_supply = $item->{total_supply}       || 0;
-                my $t_volume = $item->{total_volume}       || 0;
 
                 my $c_ath   = $item->{ath}                   || 0;
                 my $p_ath_c = $item->{ath_change_percentage} || 0;
 
-                my $p_24hr  = $item->{price_change_percentage_24h} || 0;
+                my $p_1hr   = $item->{price_change_percentage_1h_in_currency}  || 0;
+                my $p_24hr  = $item->{price_change_percentage_24h_in_currency} || 0;
+                my $p_7d    = $item->{price_change_percentage_7d_in_currency}  || 0;
+
                 my $c_price = $item->{current_price}               || 0;
 
                 my $f_price = $c_price < $OFFSET ? '.6f' : '.2f';
                 my $f_ath   = $c_ath < $OFFSET   ? '.6f' : '.2f';
 
+                my $f_1hr   = colour( { value => $p_1hr } );
                 my $f_24hr  = colour( { value => $p_24hr } );
+                my $f_7d    = colour( { value => $p_7d } );
                 my $f_ath_c = colour( { value => $p_ath_c } );
 
                 my $match   = 0;
@@ -428,15 +433,16 @@ sub get_top_crypto {
                     )
                 {
                     printf(
-                        "%-6d %-10s %-14${f_price} %-20s %-20s %-20s %-18s ${f_24hr} %-14${f_ath} ${f_ath_c}\n",
+                        "%-6d %-10s %-14${f_price} %-20s %-20s %-20s ${f_1hr} ${f_24hr} ${f_7d} %-14${f_ath} ${f_ath_c}\n",
                         $i,
                         uc( $item->{symbol} ),
                         $c_price,
                         comma( int($m_cap) ),
                         comma( int($c_supply) ),
                         comma( int($t_supply) ) || q{N/A},
-                        comma( int($t_volume) ),
+                        $p_1hr,
                         $p_24hr,
+                        $p_7d,
                         $c_ath,
                         $p_ath_c
                     );
