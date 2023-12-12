@@ -275,7 +275,7 @@ sub query_api {
 sub output_api {
     my ( $output, $results ) = @_;
 
-    if ( defined($output) and lc($output) eq 'json' ) {
+    if ( defined($output) and lc($output) eq 'dumper' ) {
         print Dumper($results);
     }
     else {
@@ -325,8 +325,10 @@ sub get_top_crypto {
             $a = query_api( $argv->{api},
                       "coins/markets?vs_currency=$opts->{symbol}&order=$order"
                     . "&per_page=$per_page&page=$i&sparkline=false" );
-            printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
-                $i, $page_count, $delay );
+            if ( $DEBUG eq 1 ) {
+                printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
+                    $i, $page_count, $delay );
+            }
             push( @b, @$a );
             sleep $delay;
         }
@@ -340,6 +342,11 @@ sub get_top_crypto {
                     api    => $CGO_URL
                 }
             );
+
+            if ( defined( $opts->{output} ) ) {
+                output_api( $opts->{output}, \@$env );
+                return;
+            }
 
             if ( length($tmc) > 1 ) {
                 printf(
