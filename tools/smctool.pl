@@ -361,9 +361,19 @@ sub get_top_crypto {
             }
 
             my $localtime = localtime();
-            printf(
-                "\nTop %d Cryptoassets (by market cap) in %s ($localtime)\n\n",
-                $opts->{no}, uc( $opts->{symbol} ) );
+            if ( not defined( $opts->{percent} ) ) {
+                printf(
+                    "\nTop %d Cryptoassets (by market cap) in %s ($localtime)\n\n",
+                    $opts->{no}, uc( $opts->{symbol} ) );
+            }
+            else {
+                printf(
+                    "\nTop %d Cryptoassets (by 24hr percentage >= %s%%) in %s ($localtime)\n\n",
+                    $opts->{no},
+                    int( $opts->{percent} ),
+                    uc( $opts->{symbol} )
+                );
+            }
 
             print
                 "No     Asset      Price          Market Cap           Circ Supply          Total Supply         24hr C(%)   ATH            ATH C(%)\n";
@@ -374,11 +384,11 @@ sub get_top_crypto {
                 return unless $i < $opts->{no};
                 $i++;
 
-                my $m_cap = $item->{market_cap} || 0,
-                my $c_supply = $item->{circulating_supply} || 0,
-                my $t_supply = $item->{total_supply} || 0,
+                my $m_cap    = $item->{market_cap}         || 0;
+                my $c_supply = $item->{circulating_supply} || 0;
+                my $t_supply = $item->{total_supply}       || 0;
 
-                my $c_ath = $item->{ath} || 0;
+                my $c_ath   = $item->{ath}                   || 0;
                 my $p_ath_c = $item->{ath_change_percentage} || 0;
 
                 my $p_24hr  = $item->{price_change_percentage_24h} || 0;
