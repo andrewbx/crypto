@@ -291,164 +291,151 @@ sub output_api {
 sub get_top_crypto {
     my ( $opts, $argv ) = @_;
 
-    if ( $argv->{request} eq 'top_crypto' ) {
-        my $symbol = 'usd';
-        my $order  = 'market_cap_desc';
-        Readonly::Scalar my $ITEMS  => 10;
-        Readonly::Scalar my $OFFSET => 0.01;
-        Readonly::Scalar my $MAXRPP => 250;
-        Readonly::Scalar my $SLEEP  => 2;
+    if ( $argv->{request} ne 'top_crypto' ) {
+        return;
+    }
 
-        if ( not $opts->{no} ) {
-            $opts->{no} = $ITEMS;
+    my $symbol = 'usd';
+    my $order  = 'market_cap_desc';
+    Readonly::Scalar my $ITEMS  => 10;
+    Readonly::Scalar my $OFFSET => 0.01;
+    Readonly::Scalar my $MAXRPP => 250;
+    Readonly::Scalar my $SLEEP  => 2;
+
+    if ( not $opts->{no} ) {
+        $opts->{no} = $ITEMS;
+    }
+
+    if ( not $opts->{symbol} ) {
+        $opts->{symbol} = $symbol;
+    }
+
+    my $env      = q{};
+    my $per_page = $opts->{no};
+    my $delay    = 0;
+
+    if ( $opts->{no} > $MAXRPP ) {
+        $per_page = $MAXRPP;
+        $delay    = $SLEEP;
+    }
+
+    my $page_count = $opts->{no} / $per_page;
+    my $remainder  = $opts->{no} % $per_page ? $page_count++ : $page_count;
+
+    my ( @a, @b ) = ();
+
+    for my $i ( 1 .. $page_count ) {
+        $a = query_api( $argv->{api},
+                  "coins/markets?vs_currency=$opts->{symbol}&order=$order"
+                . "&per_page=$per_page&page=$i&sparkline=false"
+                . "&price_change_percentage=1h%2C24h%2C7d" );
+        if ( $DEBUG eq 1 ) {
+            printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
+                $i, $page_count, $delay );
         }
+        push( @b, @$a );
+        sleep $delay;
+    }
 
-        if ( not $opts->{symbol} ) {
-            $opts->{symbol} = $symbol;
+    if ( defined( $opts->{percent} ) ) {
+        @b = grep {
+            defined
+                and $_->{price_change_percentage_24h_in_currency}
+                >= int( $opts->{percent} )
+        } @b;
+    }
+
+    $env = \@b;
+
+    if ( length($env) <= 1 ) {
+        return;
+    }
+
+    if ( defined( $opts->{output} ) ) {
+        output_api( $opts->{output}, \@$env );
+        return;
+    }
+
+    my ( $tmc, $btc_mc, $btc_d ) = get_cap_summary(
+        {   id     => 'bitcoin',
+            symbol => $opts->{symbol},
+            api    => $CGO_URL
         }
+    );
 
-        my $env      = q{};
-        my $per_page = $opts->{no};
-        my $delay    = 0;
+    if ( length($tmc) > 1 ) {
+        printf(
+            "Total Market Cap (%s): %s\n",
+            uc( $opts->{symbol} ),
+            comma($tmc)
+        );
+        printf(
+            "Bitcoin Market Cap (%s): %s\n",
+            uc( $opts->{symbol} ),
+            comma($btc_mc)
+        );
+        printf(
+            "Altcoin Market Cap (%s): %s\n",
+            uc( $opts->{symbol} ),
+            comma( $tmc - $btc_mc )
+        );
+        printf( "Bitcoin Dominance : \e[1;97m%.3f%%\e[0m\n", $btc_d );
+    }
 
-        if ( $opts->{no} > $MAXRPP ) {
-            $per_page = $MAXRPP;
-            $delay    = $SLEEP;
-        }
+    my $localtime = localtime();
+    if ( not defined( $opts->{percent} ) ) {
+        printf(
+            "\nTop %d Cryptoassets (by market cap) in %s ($localtime)\n\n",
+            $opts->{no}, uc( $opts->{symbol} ) );
+    }
+    else {
+        printf(
+            "\nTop %d Cryptoassets (by 24hr percentage >= %s%%) in %s ($localtime)\n\n",
+            $opts->{no},
+            int( $opts->{percent} ),
+            uc( $opts->{symbol} )
+        );
+    }
 
-        my $page_count = $opts->{no} / $per_page;
-        my $remainder = $opts->{no} % $per_page ? $page_count++ : $page_count;
+    print
+        "No     Asset      Price          Market Cap           Circ Supply          Total Supply         1hr C(%)    24hr C(%)   7d C(%)     ATH            ATH C(%)\n";
+    print
+        "--     -----      -----          ----------           -----------          ------------         --------    ---------   -------     ---            --------\n";
 
-        my ( @a, @b ) = ();
+    while ( my ( $i, $item ) = each(@$env) ) {
+        return unless $i < $opts->{no};
+        $i++;
 
-        for my $i ( 1 .. $page_count ) {
-            $a = query_api( $argv->{api},
-                      "coins/markets?vs_currency=$opts->{symbol}&order=$order"
-                    . "&per_page=$per_page&page=$i&sparkline=false"
-                    . "&price_change_percentage=1h%2C24h%2C7d" );
-            if ( $DEBUG eq 1 ) {
-                printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
-                    $i, $page_count, $delay );
-            }
-            push( @b, @$a );
-            sleep $delay;
-        }
+        my $m_cap    = $item->{market_cap}         || 0;
+        my $c_supply = $item->{circulating_supply} || 0;
+        my $t_supply = $item->{total_supply}       || 0;
 
-        $env = \@b;
+        my $c_ath   = $item->{ath}                   || 0;
+        my $p_ath_c = $item->{ath_change_percentage} || 0;
 
-        if ( length($env) > 1 ) {
-            my ( $tmc, $btc_mc, $btc_d ) = get_cap_summary(
-                {   id     => 'bitcoin',
-                    symbol => $opts->{symbol},
-                    api    => $CGO_URL
-                }
-            );
+        my $p_1hr  = $item->{price_change_percentage_1h_in_currency}  || 0;
+        my $p_24hr = $item->{price_change_percentage_24h_in_currency} || 0;
+        my $p_7d   = $item->{price_change_percentage_7d_in_currency}  || 0;
 
-            if ( defined( $opts->{output} ) ) {
-                output_api( $opts->{output}, \@$env );
-                return;
-            }
+        my $c_price = $item->{current_price} || 0;
 
-            if ( length($tmc) > 1 ) {
-                printf(
-                    "Total Market Cap (%s): %s\n",
-                    uc( $opts->{symbol} ),
-                    comma($tmc)
-                );
-                printf(
-                    "Bitcoin Market Cap (%s): %s\n",
-                    uc( $opts->{symbol} ),
-                    comma($btc_mc)
-                );
-                printf(
-                    "Altcoin Market Cap (%s): %s\n",
-                    uc( $opts->{symbol} ),
-                    comma( $tmc - $btc_mc )
-                );
-                printf( "Bitcoin Dominance : \e[1;97m%.3f%%\e[0m\n", $btc_d );
-            }
+        my $f_price = $c_price < $OFFSET ? '.6f' : '.2f';
+        my $f_ath   = $c_ath < $OFFSET   ? '.6f' : '.2f';
 
-            my $localtime = localtime();
-            if ( not defined( $opts->{percent} ) ) {
-                printf(
-                    "\nTop %d Cryptoassets (by market cap) in %s ($localtime)\n\n",
-                    $opts->{no}, uc( $opts->{symbol} ) );
-            }
-            else {
-                printf(
-                    "\nTop %d Cryptoassets (by 24hr percentage >= %s%%) in %s ($localtime)\n\n",
-                    $opts->{no},
-                    int( $opts->{percent} ),
-                    uc( $opts->{symbol} )
-                );
-            }
+        my $f_1hr   = colour( { value => $p_1hr } );
+        my $f_24hr  = colour( { value => $p_24hr } );
+        my $f_7d    = colour( { value => $p_7d } );
+        my $f_ath_c = colour( { value => $p_ath_c } );
 
-            print
-                "No     Asset      Price          Market Cap           Circ Supply          Total Supply         1hr C(%)    24hr C(%)   7d C(%)     ATH            ATH C(%)\n";
-            print
-                "--     -----      -----          ----------           -----------          ------------         --------    ---------   -------     ---            --------\n";
-
-            while ( my ( $i, $item ) = each(@$env) ) {
-                return unless $i < $opts->{no};
-                $i++;
-
-                my $m_cap    = $item->{market_cap}         || 0;
-                my $c_supply = $item->{circulating_supply} || 0;
-                my $t_supply = $item->{total_supply}       || 0;
-
-                my $c_ath   = $item->{ath}                   || 0;
-                my $p_ath_c = $item->{ath_change_percentage} || 0;
-
-                my $p_1hr   = $item->{price_change_percentage_1h_in_currency}  || 0;
-                my $p_24hr  = $item->{price_change_percentage_24h_in_currency} || 0;
-                my $p_7d    = $item->{price_change_percentage_7d_in_currency}  || 0;
-
-                my $c_price = $item->{current_price}               || 0;
-
-                my $f_price = $c_price < $OFFSET ? '.6f' : '.2f';
-                my $f_ath   = $c_ath < $OFFSET   ? '.6f' : '.2f';
-
-                my $f_1hr   = colour( { value => $p_1hr } );
-                my $f_24hr  = colour( { value => $p_24hr } );
-                my $f_7d    = colour( { value => $p_7d } );
-                my $f_ath_c = colour( { value => $p_ath_c } );
-
-                my $match   = 0;
-                my $default = 1;
-
-                if ( defined( $opts->{percent} ) ) {
-                    $default = 0;
-
-                    if ( int($p_24hr) >= int( $opts->{percent} ) ) {
-                        $match = 1;
-                    }
-                    else {
-                        $match = 0;
-                    }
-                }
-
-                if (( $match eq 1 and $default eq 0 )
-                    || (    $match eq 0
-                        and $default eq 1 )
-                    )
-                {
-                    printf(
-                        "%-6d %-10s %-14${f_price} %-20s %-20s %-20s ${f_1hr} ${f_24hr} ${f_7d} %-14${f_ath} ${f_ath_c}\n",
-                        $i,
-                        uc( $item->{symbol} ),
-                        $c_price,
-                        comma( int($m_cap) ),
-                        comma( int($c_supply) ),
-                        comma( int($t_supply) ) || q{N/A},
-                        $p_1hr,
-                        $p_24hr,
-                        $p_7d,
-                        $c_ath,
-                        $p_ath_c
-                    );
-                }
-            }
-        }
+        printf(
+            "%-6d %-10s %-14${f_price} %-20s %-20s %-20s ${f_1hr} ${f_24hr} ${f_7d} %-14${f_ath} ${f_ath_c}\n",
+            $i,                      uc( $item->{symbol} ),
+            $c_price,                comma( int($m_cap) ),
+            comma( int($c_supply) ), comma( int($t_supply) ) || q{N/A},
+            $p_1hr,                  $p_24hr,
+            $p_7d,                   $c_ath,
+            $p_ath_c
+        );
     }
 
     return;
