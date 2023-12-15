@@ -322,37 +322,37 @@ sub get_top_crypto {
     my $page_count = $opts->{no} / $per_page;
     my $remainder  = $opts->{no} % $per_page ? $page_count++ : $page_count;
 
-    my ( @a, @b ) = ();
+    my @a = ();
 
     for my $i ( 1 .. $page_count ) {
-        $a = query_api( $argv->{api},
+        local $a = query_api( $argv->{api},
                   "coins/markets?vs_currency=$opts->{symbol}&order=$order"
                 . "&per_page=$per_page&page=$i&sparkline=false"
                 . "&price_change_percentage=1h%2C24h%2C7d" );
-        if ( $DEBUG eq 1 ) {
+        if ( $DEBUG == 1 ) {
             printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
                 $i, $page_count, $delay );
         }
-        push( @b, @$a );
+        push( @a, @{$a} );
         sleep $delay;
     }
 
     if ( defined( $opts->{percent} ) ) {
-        @b = grep {
+        @a = grep {
             defined
                 and $_->{price_change_percentage_24h_in_currency}
                 >= int( $opts->{percent} )
-        } @b;
+        } @a;
     }
 
-    $env = \@b;
+    $env = \@a;
 
     if ( length($env) <= 1 ) {
         return;
     }
 
     if ( defined( $opts->{output} ) ) {
-        output_api( $opts->{output}, \@$env );
+        output_api( $opts->{output}, \@{$env} );
         return;
     }
 
@@ -402,8 +402,10 @@ sub get_top_crypto {
     print
         "--     -----      -----          ----------           -----------          ------------         --------    ---------   -------     ---            --------\n";
 
-    while ( my ( $i, $item ) = each(@$env) ) {
-        return unless $i < $opts->{no};
+    while ( my ( $i, $item ) = each( @{$env} ) ) {
+        return
+            if ( $i >= $opts->{no} );
+
         $i++;
 
         my $m_cap    = $item->{market_cap}         || 0;
@@ -493,7 +495,10 @@ sub get_mc {
 sub get_cd {
     my ($argv) = @_;
 
-    return ( $argv->{cmc} / $argv->{tmc} ) if ($argv);
+    return
+        if ( not $argv );
+
+    return ( $argv->{cmc} / $argv->{tmc} );
 }
 
 # Add formatting to price.
@@ -501,9 +506,12 @@ sub get_cd {
 sub comma {
     my ($argv) = @_;
 
+    return
+        if ( not $argv );
+
     return (
-        scalar reverse( reverse($argv) =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/gr ) )
-        if ($argv);
+        scalar
+            reverse( reverse($argv) =~ s/(\d\d\d)(?=\d)(?!\d*[.])/$1,/gr ) );
 }
 
 # Price highlighting.
@@ -511,9 +519,12 @@ sub comma {
 sub colour {
     my ($argv) = @_;
 
+    return
+        if ( not $argv );
+
     return (
         $argv->{value} < 0
         ? "\e[1;91m%-11.2f\e[0m"
         : "\e[1;92m%-11.2f\e[0m"
-    ) if ($argv);
+    );
 }
