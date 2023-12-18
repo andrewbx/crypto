@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : smctool.pl
-# Version     : v1.16-STABLE-2023-12-14
+# Version     : v1.17-STABLE-2023-12-18
 # Description : Check Blockchain Smart Contract Health
 # Syntax      : smctool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -28,7 +28,7 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ':encoding(UTF-8)' );
 
-our $VERSION = 'v1.16-STABLE';
+our $VERSION = 'v1.17-STABLE';
 my $RELEASE = "smcTOOL $VERSION";
 
 my $GPL_URL = 'https://api.gopluslabs.io/api/v1';
