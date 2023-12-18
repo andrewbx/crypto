@@ -377,9 +377,9 @@ sub get_top_crypto {
     }
 
     print
-        "No     Asset      Price          Market Cap           Circ Supply          Total Supply         1hr C(%)    24hr C(%)   7d C(%)     ATH            ATH C(%)\n";
+        "No     Asset      Price          Market Cap           Circ Supply              Total Supply             1hr C(%)    24hr C(%)   7d C(%)     ATH            ATH C(%)\n";
     print
-        "--     -----      -----          ----------           -----------          ------------         --------    ---------   -------     ---            --------\n";
+        "--     -----      -----          ----------           -----------              ------------             --------    ---------   -------     ---            --------\n";
 
     while ( my ( $i, $item ) = each( @{$env} ) ) {
         return
@@ -400,21 +400,26 @@ sub get_top_crypto {
 
         my $c_price = $item->{current_price} || 0;
 
-        my $f_price = $c_price < $OFFSET ? '.6f' : '.2f';
-        my $f_ath   = $c_ath < $OFFSET   ? '.6f' : '.2f';
+        my $f_price = $c_price < $OFFSET ? '%-14.6f' : '%-14.2f';
+        my $f_ath   = $c_ath < $OFFSET   ? '%-14.6f' : '%-14.2f';
 
-        my $f_1hr   = colour( { value => $p_1hr } );
-        my $f_24hr  = colour( { value => $p_24hr } );
-        my $f_7d    = colour( { value => $p_7d } );
-        my $f_ath_c = colour( { value => $p_ath_c } );
+        my $f_1hr   = colour( { value => $p_1hr } )   || q{};
+        my $f_24hr  = colour( { value => $p_24hr } )  || q{};
+        my $f_7d    = colour( { value => $p_7d } )    || q{};
+        my $f_ath_c = colour( { value => $p_ath_c } ) || q{};
 
         printf(
-            "%-6d %-10s %-14${f_price} %-20s %-20s %-20s ${f_1hr} ${f_24hr} ${f_7d} %-14${f_ath} ${f_ath_c}\n",
-            $i,                      uc( $item->{symbol} ),
-            $c_price,                comma( int($m_cap) ),
-            comma( int($c_supply) ), comma( int($t_supply) ) || q{N/A},
-            $p_1hr,                  $p_24hr,
-            $p_7d,                   $c_ath,
+            "%-6d %-10s ${f_price} %-20s %-24s %-24s ${f_1hr} ${f_24hr} ${f_7d} ${f_ath} ${f_ath_c}\n",
+            $i,
+            uc( $item->{symbol} ),
+            $c_price,
+            comma( int($m_cap) || q{N/A} ),
+            comma( int($c_supply) ) || q{N/A},
+            comma( int($t_supply) ) || q{N/A},
+            $p_1hr,
+            $p_24hr,
+            $p_7d,
+            $c_ath,
             $p_ath_c
         );
     }
@@ -464,7 +469,7 @@ sub print_mcap_summary {
 sub get_mcap_summary {
     my ($argv) = @_;
 
-    return
+    return 0
         if ( not $argv );
 
     my $symbol         = lc( $argv->{symbol} );
@@ -483,7 +488,7 @@ sub get_mcap_summary {
 sub get_tmc {
     my ($argv) = @_;
 
-    return
+    return 0
         if ( not $argv );
 
     my $symbol = lc( $argv->{symbol} );
@@ -497,7 +502,7 @@ sub get_tmc {
 sub get_mc {
     my ($argv) = @_;
 
-    return
+    return 0
         if ( not $argv );
 
     my $symbol = lc( $argv->{symbol} );
@@ -511,7 +516,7 @@ sub get_mc {
 sub get_cd {
     my ($argv) = @_;
 
-    return
+    return 0
         if ( not $argv );
 
     return ( $argv->{cmc} / $argv->{tmc} );
@@ -522,7 +527,7 @@ sub get_cd {
 sub comma {
     my ($argv) = @_;
 
-    return
+    return 0
         if ( not $argv );
 
     return (
