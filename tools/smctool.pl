@@ -38,8 +38,6 @@ my $DEX_URL = 'https://api.dexscreener.com/latest/dex';
 my $LWP_UA  = 'Mozilla/5.0';
 my $DEBUG   = 0;
 
-Readonly::Scalar my $TIMEOUT => 15;
-
 @ARGV or help();
 
 # Process Command Options.
@@ -52,6 +50,7 @@ Readonly::Scalar my $TIMEOUT => 15;
         'c|cid=i'           => \$opts{cid},
         'a|address=s'       => \$opts{address},
         'i|api=s'           => \$opts{api},
+        'm|mcap=i'          => \$opts{mcap},
         'n|no=n'            => \$opts{no},
         's|symbol=s'        => \$opts{symbol},
         'p|percent=i'       => \$opts{percent},
@@ -185,6 +184,7 @@ sub help {
   -c|cid      <chain id>            Blockchain ID
   -a|address  <blockhain address>   Smart Contract or Holder address
   -i|api      <cgo|gpl|cap|dex>     API Endpoint (gpl=GoPlusLabs, cgo=Coin Gecko, cap=Coin Cap, dex=DEX Screener)
+  -m|mcap     <1|0>                 Show market cap summary (1=yes, 0=no)
   -n|num      <items>               Number of items to display for top cryptoassets
   -s|symbol   <ticker>              Currency symbol
   -p|percent  <24hr percentage>     Filter results by percentage value
@@ -244,6 +244,7 @@ sub process_api {
 
 sub query_api {
     my ( $url, $argv ) = @_;
+    Readonly::Scalar my $TIMEOUT => 15;
 
     my $ua = LWP::UserAgent->new(
         agent             => $LWP_UA,
@@ -328,8 +329,8 @@ sub get_top_crypto {
         local $a = query_api( $argv->{api},
                   "coins/markets?vs_currency=$opts->{symbol}&order=$order"
                 . "&per_page=$per_page&page=$i&sparkline=false"
-                . "&price_change_percentage=1h%2C24h%2C7d" );
-        if ( $DEBUG == 1 ) {
+                . '&price_change_percentage=1h%2C24h%2C7d' );
+        if ($DEBUG) {
             printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
                 $i, $page_count, $delay );
         }
@@ -356,30 +357,8 @@ sub get_top_crypto {
         return;
     }
 
-    my ( $tmc, $btc_mc, $btc_d ) = get_cap_summary(
-        {   id     => 'bitcoin',
-            symbol => $opts->{symbol},
-            api    => $CGO_URL
-        }
-    );
-
-    if ( length($tmc) > 1 ) {
-        printf(
-            "Total Market Cap (%s): %s\n",
-            uc( $opts->{symbol} ),
-            comma($tmc)
-        );
-        printf(
-            "Bitcoin Market Cap (%s): %s\n",
-            uc( $opts->{symbol} ),
-            comma($btc_mc)
-        );
-        printf(
-            "Altcoin Market Cap (%s): %s\n",
-            uc( $opts->{symbol} ),
-            comma( $tmc - $btc_mc )
-        );
-        printf( "Bitcoin Dominance : \e[1;97m%.3f%%\e[0m\n", $btc_d );
+    if ( $opts->{mcap} ) {
+        print_mcap_summary($opts);
     }
 
     my $localtime = localtime();
@@ -443,9 +422,46 @@ sub get_top_crypto {
     return;
 }
 
+# Print market cap summary.
+
+sub print_mcap_summary {
+    my ($argv) = @_;
+
+    return
+        if ( not $argv );
+
+    my ( $tmc, $btc_mc, $btc_d ) = get_mcap_summary(
+        {   id     => 'bitcoin',
+            symbol => $argv->{symbol},
+            api    => $CGO_URL
+        }
+    );
+
+    if ( length($tmc) > 1 ) {
+        printf(
+            "Total Market Cap (%s): %s\n",
+            uc( $argv->{symbol} ),
+            comma($tmc)
+        );
+        printf(
+            "Bitcoin Market Cap (%s): %s\n",
+            uc( $argv->{symbol} ),
+            comma($btc_mc)
+        );
+        printf(
+            "Altcoin Market Cap (%s): %s\n",
+            uc( $argv->{symbol} ),
+            comma( $tmc - $btc_mc )
+        );
+        printf( "Bitcoin Dominance : \e[1;97m%.3f%%\e[0m\n", $btc_d );
+    }
+
+    return;
+}
+
 # Get market cap summary.
 
-sub get_cap_summary {
+sub get_mcap_summary {
     my ($argv) = @_;
 
     return
