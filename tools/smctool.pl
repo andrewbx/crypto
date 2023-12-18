@@ -301,7 +301,7 @@ sub get_top_crypto {
     Readonly::Scalar my $ITEMS  => 10;
     Readonly::Scalar my $OFFSET => 0.01;
     Readonly::Scalar my $MAXRPP => 250;
-    Readonly::Scalar my $SLEEP  => 2;
+    Readonly::Scalar my $SLEEP  => 1;
 
     if ( not $opts->{no} ) {
         $opts->{no} = $ITEMS;
@@ -330,7 +330,7 @@ sub get_top_crypto {
                   "coins/markets?vs_currency=$opts->{symbol}&order=$order"
                 . "&per_page=$per_page&page=$i&sparkline=false"
                 . '&price_change_percentage=1h%2C24h%2C7d' );
-        if ($DEBUG) {
+        if ($DEBUG or $page_count > 1) {
             printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
                 $i, $page_count, $delay );
         }
@@ -413,7 +413,7 @@ sub get_top_crypto {
             $i,
             uc( $item->{symbol} ),
             $c_price,
-            comma( int($m_cap) || q{N/A} ),
+            comma( int($m_cap) )    || q{N/A},
             comma( int($c_supply) ) || q{N/A},
             comma( int($t_supply) ) || q{N/A},
             $p_1hr,
