@@ -410,7 +410,7 @@ sub get_top_crypto {
 
         printf(
             "%-6d %-10s ${f_price} %-20s %-24s %-24s ${f_1hr} ${f_24hr} ${f_7d} ${f_ath} ${f_ath_c}\n",
-            $i,
+            $item->{market_cap_rank},
             uc( $item->{symbol} ),
             $c_price,
             comma( int($m_cap) )    || q{N/A},
