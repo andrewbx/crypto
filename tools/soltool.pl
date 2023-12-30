@@ -81,7 +81,7 @@ my $DEBUG  = 0;
     }
 
     if ( $args{pools} ) {
-        $opts{output} = defined($opts{output}) ? $opts{output} : 'table';
+        $opts{output} = defined( $opts{output} ) ? $opts{output} : 'table';
         process_api(
             \%opts,
             {   api     => $PMP_POOL,
@@ -168,9 +168,9 @@ sub process_table {
     my ($results) = @_;
 
     print
-        "Date Created         Asset            TokenId                                       Total Supply                   LP Burn(%)   Mintable   RugPull    C. Flag    S. Flag    Name\n";
+        "Date Created         Asset            TokenId                                       Total Supply                   LP SOL  LP Burn    Mintable   RugPull    C. Flag    S. Flag    Name\n";
     print
-        "------------         -----            -------                                       ------------                   ---------    --------   -------    -------    -------    ----\n";
+        "------------         -----            -------                                       ------------                   ------  -------    --------   -------    -------    -------    ----\n";
 
     while ( my ( $i, $item ) = each( @{$results} ) ) {
         $item->{symbol} =~ s/^\s+//;
@@ -187,12 +187,13 @@ sub process_table {
             ( localtime $item->{timeCreated} / 1000 );
 
         printf(
-            "%-20s %-16s %-45s %-30s %-12.2f ${f_isMintable} ${f_rugPull} ${f_isCreatorFlagged} ${f_isSymbolFlagged} %-30s\n",
-            $timestamp,               uc( $item->{symbol} ),
-            $item->{tokenId},         comma( $item->{totalSupply} ),
-            floor( $item->{lpBurn} ), $item->{isMintable},
-            $item->{rugPull},         $item->{isCreatorFlagged},
-            $item->{isSymbolFlagged}, $item->{name}
+            "%-20s %-16s %-45s %-30s %-6s %7.2f%%    ${f_isMintable} ${f_rugPull} ${f_isCreatorFlagged} ${f_isSymbolFlagged} %-30s\n",
+            $timestamp,                uc( $item->{symbol} ),
+            $item->{tokenId},          comma( $item->{totalSupply} ),
+            $item->{amountOfQuote},    $item->{lpBurn},
+            $item->{isMintable},       $item->{rugPull},
+            $item->{isCreatorFlagged}, $item->{isSymbolFlagged},
+            $item->{name}
         );
     }
 
