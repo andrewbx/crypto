@@ -48,8 +48,8 @@ my $DEBUG  = 0;
         'o|output=s'   => \$opts{output},
         'm|mintable=i' => \$opts{mintable},
         'r|rugpull=i'  => \$opts{rugpull},
-        'c|fcreator=i' => \$opts{fcreator},
-        't|ftoken=i'   => \$opts{ftoken},
+        'c|creator=i'  => \$opts{creator},
+        's|symbol=i'   => \$opts{symbol},
         'l|lp=i'       => \$opts{lp},
         'drops'        => \$args{drops},
         'pools'        => \$args{pools},
@@ -98,14 +98,14 @@ sub help {
 
 \033[1mUsage:\033[0m
   --drops                       List new drops
-  --pools   <-m|-r|-c|-t|-l>    List new liquidity pools
+  --pools   <-r|-m|-c|-s|-l>    List new liquidity pools
 
 \033[1mOptions:\033[0m
   -o|output    <json|dumper>    Output format for API Query (Default=json)
-  -m|mintable  <1|0>            List pools with mintable flag set/unset
   -r|rugpull   <1|0>            List pools with rugpull flag set/unset
-  -c|fcreator  <1|0>            List pools with creator flag set/unset
-  -t|ftoken    <1|0>            List pools with token flag set/unset
+  -m|mintable  <1|0>            List pools with mintable flag set/unset
+  -c|creator   <1|0>            List pools with creator flag set/unset
+  -s|symbol    <1|0>            List pools with symbol flag set/unset
   -l|lp        <no>             List pools with liquidity pool size > value
   --debug                       Enable verbose mode
   --help                        Print this help information
@@ -123,11 +123,64 @@ sub process_api {
 
     my $env = query_api( $argv->{api}, "$argv->{request}" );
 
+    push( my @a, @{ $env->{pools} } );
+
+    if ( defined( $opts->{rugpull} ) ) {
+        @a = grep { defined and ( $_->{rugPull} ) eq $opts->{rugpull} } @a;
+    }
+
+    if ( defined( $opts->{mintable} ) ) {
+        @a = grep { defined and ( $_->{isMintable} ) eq $opts->{mintable} }
+            @a;
+    }
+
+    if ( defined( $opts->{creator} ) ) {
+        @a = grep {
+            defined
+                and ( $_->{isCreatorFlagged} ) eq $opts->{creator}
+        } @a;
+    }
+
+    if ( defined( $opts->{symbol} ) ) {
+        @a = grep { defined and ( $_->{isSymbolFlagged} ) eq $opts->{symbol} }
+            @a;
+    }
+
+    if ( defined( $opts->{lp} ) ) {
+        @a = grep { defined and int( $_->{lpBurn} ) >= int( $opts->{lp} ) }
+            @a;
+    }
+
+    $env = \@a;
+
     if ( length($env) > 0 ) {
         output_api( $opts->{output}, $env );
     }
     else {
         print "\nNo results found.\n";
+    }
+
+    return;
+}
+
+sub process_table {
+    my ($results) = @_;
+
+    print
+        "Asset      TokenId                                       Total Supply                   LP Burn(%)   RugPull    C. Flag    S. Flag    Name\n";
+    print
+        "-----      -------                                       ------------                   ---------    -------    -------    -------    ----\n";
+
+    while ( my ( $i, $item ) = each( @{$results} ) ) {
+        $item->{symbol} =~ s/^\s+//;
+
+        printf(
+            "%-10s %-45s %-30s %-12s %-10s %-10s %-10s %-30s\n",
+            uc( $item->{symbol} ),         $item->{tokenId},
+            comma( $item->{totalSupply} ), $item->{lpBurn},
+            $item->{rugPull},              $item->{isCreatorFlagged},
+            $item->{isSymbolFlagged},      $item->{name},
+        );
     }
 
     return;
@@ -172,6 +225,9 @@ sub output_api {
 
     if ( defined($output) and lc($output) eq 'dumper' ) {
         print Dumper($results);
+    }
+    elsif ( defined($output) and lc($output) eq 'table' ) {
+        process_table($results);
     }
     else {
         my $json = JSON->new;
