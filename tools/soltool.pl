@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : soltool.pl
-# Version     : v1.3-STABLE-2023-12-30
+# Version     : v1.4-STABLE-2023-12-30
 # Description : Check Solana Contract & Pools Health
 # Syntax      : soltool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -28,7 +28,7 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ':encoding(UTF-8)' );
 
-our $VERSION = 'v1.3-STABLE';
+our $VERSION = 'v1.4-STABLE';
 my $RELEASE = "solTOOL $VERSION";
 
 my $PMP_POOL = 'https://pumpr.xyz/api';
@@ -168,9 +168,9 @@ sub process_table {
     my ($results) = @_;
 
     print
-        "Date Created         Asset            TokenId                                       Total Supply                   LP SOL  LP Burn    Mintable   RugPull    C. Flag    S. Flag    Name\n";
+        "Date Created         Asset            TokenId                                       Total Supply                   LP SOL        LP Burn    Mintable   RugPull    C. Flag    S. Flag    Name\n";
     print
-        "------------         -----            -------                                       ------------                   ------  -------    --------   -------    -------    -------    ----\n";
+        "------------         -----            -------                                       ------------                   ------        -------    --------   -------    -------    -------    ----\n";
 
     while ( my ( $i, $item ) = each( @{$results} ) ) {
         $item->{symbol} =~ s/^\s+//;
@@ -186,8 +186,9 @@ sub process_table {
         my $timestamp = strftime '%Y-%m-%d %H:%M:%S',
             ( localtime $item->{timeCreated} / 1000 );
 
+        $item->{symbol} = substr( $item->{symbol}, 0, 10 );
         printf(
-            "%-20s %-16s %-45s %-30s %-6s %7.2f%%    ${f_isMintable} ${f_rugPull} ${f_isCreatorFlagged} ${f_isSymbolFlagged} %-30s\n",
+            "%-20s %-16s %-45s %-30s %-12s %7.2f%%    ${f_isMintable} ${f_rugPull} ${f_isCreatorFlagged} ${f_isSymbolFlagged} %-30s\n",
             $timestamp,                uc( $item->{symbol} ),
             $item->{tokenId},          comma( $item->{totalSupply} ),
             $item->{amountOfQuote},    $item->{lpBurn},
