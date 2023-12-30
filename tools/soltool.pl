@@ -175,23 +175,23 @@ sub process_table {
         $item->{symbol} =~ s/^\s+//;
 
         my $f_isMintable = colour( { value => $item->{isMintable} } ) || q{};
-        my $f_rugPull = colour( { value => $item->{rugPull} } ) || q{};
-        my $f_lpBurn  = colour( { value => $item->{lpBurn} } )  || q{};
+        my $f_rugPull    = colour( { value => $item->{rugPull} } )    || q{};
+        my $f_lpBurn     = colour( { value => $item->{lpBurn} } )     || q{};
         my $f_isCreatorFlagged
             = colour( { value => $item->{isCreatorFlagged} } ) || q{};
         my $f_isSymbolFlagged
             = colour( { value => $item->{isSymbolFlagged} } ) || q{};
 
-        my $timestamp = strftime '%Y-%m-%d %H:%M:%S', (localtime $item->{timeCreated} / 1000);
+        my $timestamp = strftime '%Y-%m-%d %H:%M:%S',
+            ( localtime $item->{timeCreated} / 1000 );
 
         printf(
             "%-20s %-16s %-45s %-30s %-12.2f ${f_isMintable} ${f_rugPull} ${f_isCreatorFlagged} ${f_isSymbolFlagged} %-30s\n",
-            $timestamp,
-            uc( $item->{symbol} ),         $item->{tokenId},
-            comma( $item->{totalSupply} ), floor( $item->{lpBurn} ),
-            $item->{isMintable},
-            $item->{rugPull},              $item->{isCreatorFlagged},
-            $item->{isSymbolFlagged},      $item->{name}
+            $timestamp,               uc( $item->{symbol} ),
+            $item->{tokenId},         comma( $item->{totalSupply} ),
+            floor( $item->{lpBurn} ), $item->{isMintable},
+            $item->{rugPull},         $item->{isCreatorFlagged},
+            $item->{isSymbolFlagged}, $item->{name}
         );
     }
 
