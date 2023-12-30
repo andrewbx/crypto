@@ -81,6 +81,7 @@ my $DEBUG  = 0;
     }
 
     if ( $args{pools} ) {
+        $opts{output} = defined($opts{output}) ? $opts{output} : 'table';
         process_api(
             \%opts,
             {   api     => $PMP_POOL,
