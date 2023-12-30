@@ -174,12 +174,19 @@ sub process_table {
     while ( my ( $i, $item ) = each( @{$results} ) ) {
         $item->{symbol} =~ s/^\s+//;
 
+        my $f_rugPull = colour( { value => $item->{rugPull} } ) || q{};
+        my $f_lpBurn  = colour( { value => $item->{lpBurn} } )  || q{};
+        my $f_isCreatorFlagged
+            = colour( { value => $item->{isCreatorFlagged} } ) || q{};
+        my $f_isSymbolFlagged
+            = colour( { value => $item->{isSymbolFlagged} } ) || q{};
+
         printf(
-            "%-10s %-45s %-30s %-12s %-10s %-10s %-10s %-30s\n",
+            "%-10s %-45s %-30s %-12.2f ${f_rugPull} ${f_isCreatorFlagged} ${f_isSymbolFlagged} %-30s\n",
             uc( $item->{symbol} ),         $item->{tokenId},
-            comma( $item->{totalSupply} ), $item->{lpBurn},
+            comma( $item->{totalSupply} ), floor( $item->{lpBurn} ),
             $item->{rugPull},              $item->{isCreatorFlagged},
-            $item->{isSymbolFlagged},      $item->{name},
+            $item->{isSymbolFlagged},      $item->{name}
         );
     }
 
@@ -259,8 +266,8 @@ sub colour {
         if ( not $argv );
 
     return (
-        $argv->{value} < 0
-        ? "\e[1;91m%-11.2f\e[0m"
-        : "\e[1;92m%-11.2f\e[0m"
+        $argv->{value} eq 1
+        ? "\e[1;91m%-10s\e[0m"
+        : "\e[1;92m%-10s\e[0m"
     );
 }
