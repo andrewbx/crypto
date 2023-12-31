@@ -126,7 +126,24 @@ sub process_api {
 
     my $env = query_api( $argv->{api}, "$argv->{request}" );
 
-    push( my @a, @{ $env->{pools} } );
+    if ( $argv->{request} eq 'getPools' ) {
+        $env = process_pools( $opts, $env );
+    }
+
+    if ( length($env) > 0 ) {
+        output_api( $opts->{output}, $env );
+    }
+    else {
+        print "\nNo results found.\n";
+    }
+
+    return;
+}
+
+sub process_pools {
+    my ( $opts, $argv ) = @_;
+
+    push( my @a, @{ $argv->{pools} } );
 
     if ( defined( $opts->{rugpull} ) ) {
         @a = grep { defined and ( $_->{rugPull} ) eq $opts->{rugpull} } @a;
@@ -156,16 +173,7 @@ sub process_api {
 
     @a = reverse sort { $a->{timeCreated} <=> $b->{timeCreated} } @a;
 
-    $env = \@a;
-
-    if ( length($env) > 0 ) {
-        output_api( $opts->{output}, $env );
-    }
-    else {
-        print "\nNo results found.\n";
-    }
-
-    return;
+    return \@a;
 }
 
 sub process_table {
@@ -173,9 +181,9 @@ sub process_table {
     Readonly::Scalar my $TSOFFSET => 1000;
 
     print
-        "Date Created         Asset            TokenId                                       Total Supply                   LP SOL        LP Burn    Mintable   RugPull    C. Flag    S. Flag    Name\n";
+        "Date Created         Asset            TokenId                                       Total Supply                   LP C          LP Burn    Mintable   RugPull    C. Flag    S. Flag    Name\n";
     print
-        "------------         -----            -------                                       ------------                   ------        -------    --------   -------    -------    -------    ----\n";
+        "------------         -----            -------                                       ------------                   ----          -------    --------   -------    -------    -------    ----\n";
 
     while ( my ( $i, $item ) = each( @{$results} ) ) {
         my $f_ismintable = colour( { value => $item->{isMintable} } ) || q{};
