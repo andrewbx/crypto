@@ -36,6 +36,8 @@ my $PMP_DROP = 'https://pumr-drops-production.up.railway.app';
 
 my $LWP_UA = 'Mozilla/5.0';
 my $DEBUG  = 0;
+my $EMOJIS
+    = "[\x{1f300}-\x{1f5ff}\x{1f900}-\x{1f9ff}\x{1f600}-\x{1f64f}\x{1f680}-\x{1f6ff}\x{2600}-\x{26ff}\x{2700}-\x{27bf}\x{1f1e6}-\x{1f1ff}\x{1f191}-\x{1f251}\x{1f004}\x{1f0cf}\x{1f170}-\x{1f171}\x{1f17e}-\x{1f17f}\x{1f18e}\x{3030}\x{2b50}\x{2b55}\x{2934}-\x{2935}\x{2b05}-\x{2b07}\x{2b1b}-\x{2b1c}\x{3297}\x{3299}\x{303d}\x{00a9}\x{00ae}\x{2122}\x{23f3}\x{24c2}\x{23e9}-\x{23ef}\x{25b6}\x{23f8}-\x{23fa}]";
 
 @ARGV or help();
 
@@ -152,6 +154,8 @@ sub process_api {
             @a;
     }
 
+    @a = reverse sort { $a->{timeCreated} <=> $b->{timeCreated} } @a;
+
     $env = \@a;
 
     if ( length($env) > 0 ) {
@@ -166,6 +170,7 @@ sub process_api {
 
 sub process_table {
     my ($results) = @_;
+    Readonly::Scalar my $TSOFFSET => 1000;
 
     print
         "Date Created         Asset            TokenId                                       Total Supply                   LP SOL        LP Burn    Mintable   RugPull    C. Flag    S. Flag    Name\n";
@@ -173,22 +178,25 @@ sub process_table {
         "------------         -----            -------                                       ------------                   ------        -------    --------   -------    -------    -------    ----\n";
 
     while ( my ( $i, $item ) = each( @{$results} ) ) {
-        $item->{symbol} =~ s/^\s+//;
-
-        my $f_isMintable = colour( { value => $item->{isMintable} } ) || q{};
-        my $f_rugPull    = colour( { value => $item->{rugPull} } )    || q{};
-        my $f_lpBurn     = colour( { value => $item->{lpBurn} } )     || q{};
-        my $f_isCreatorFlagged
+        my $f_ismintable = colour( { value => $item->{isMintable} } ) || q{};
+        my $f_rugpull    = colour( { value => $item->{rugPull} } )    || q{};
+        my $f_lpburn     = colour( { value => $item->{lpBurn} } )     || q{};
+        my $f_iscreatorflagged
             = colour( { value => $item->{isCreatorFlagged} } ) || q{};
-        my $f_isSymbolFlagged
+        my $f_issymbolflagged
             = colour( { value => $item->{isSymbolFlagged} } ) || q{};
 
         my $timestamp = strftime '%Y-%m-%d %H:%M:%S',
-            ( localtime $item->{timeCreated} / 1000 );
+            localtime( $item->{timeCreated} / $TSOFFSET );
 
-        $item->{symbol} = substr( $item->{symbol}, 0, 10 );
+        $item->{symbol} =~ s/${EMOJIS}//g;
+        $item->{symbol} =~ s/^\s+//;
+
+        $item->{name} =~ s/${EMOJIS}//g;
+        $item->{name} =~ s/^\s+//;
+
         printf(
-            "%-20s %-16s %-45s %-30s %-12s %7.2f%%    ${f_isMintable} ${f_rugPull} ${f_isCreatorFlagged} ${f_isSymbolFlagged} %-30s\n",
+            "%-20s %-16s %-45s %-30s %-12s %7.2f%%    ${f_ismintable} ${f_rugpull} ${f_iscreatorflagged} ${f_issymbolflagged} %-30s\n",
             $timestamp,                uc( $item->{symbol} ),
             $item->{tokenId},          comma( $item->{totalSupply} ),
             $item->{amountOfQuote},    $item->{lpBurn},
@@ -274,7 +282,7 @@ sub colour {
         if ( not $argv );
 
     return (
-        $argv->{value} eq 1
+        $argv->{value} eq q{1}
         ? "\e[1;91m%-10s\e[0m"
         : "\e[1;92m%-10s\e[0m"
     );
