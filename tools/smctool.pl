@@ -54,6 +54,7 @@ my $DEBUG   = 0;
         'n|no=n'            => \$opts{no},
         's|symbol=s'        => \$opts{symbol},
         'p|percent=i'       => \$opts{percent},
+        't|ticker=s'        => \$opts{ticker},
         'query_api=s'       => \$args{query_api},
         'token_security'    => \$args{token_security},
         'approval_security' => \$args{approval_security},
@@ -186,7 +187,8 @@ sub help {
   -i|api      <cgo|gpl|cap|dex>     API Endpoint (gpl=GoPlusLabs, cgo=Coin Gecko, cap=Coin Cap, dex=DEX Screener)
   -m|mcap     <1|0>                 Show market cap summary (1=yes, 0=no)
   -n|num      <items>               Number of items to display for top cryptoassets
-  -s|symbol   <ticker>              Currency symbol
+  -s|symbol   <currency>            Denonimated currency
+  -t|ticker   <ticker>              Crypto ticker symbol
   -p|percent  <24hr percentage>     Filter results by percentage value
   --debug                           Enable verbose mode
   --help                            Print this help information
@@ -330,12 +332,19 @@ sub get_top_crypto {
                   "coins/markets?vs_currency=$opts->{symbol}&order=$order"
                 . "&per_page=$per_page&page=$i&sparkline=false"
                 . '&price_change_percentage=1h%2C24h%2C7d' );
-        if ($DEBUG or $page_count > 1) {
+        if ( $DEBUG or $page_count > 1 ) {
             printf( "[+] Parsing results page %d/%d (delay=%ds)\n",
                 $i, $page_count, $delay );
         }
         push( @a, @{$a} );
         sleep $delay;
+    }
+
+    if ( defined( $opts->{ticker} ) ) {
+        @a = grep {
+            defined
+                and lc( $_->{symbol} ) eq ( lc( $opts->{ticker} ) )
+        } @a;
     }
 
     if ( defined( $opts->{percent} ) ) {
