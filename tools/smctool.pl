@@ -371,18 +371,26 @@ sub get_top_crypto {
     }
 
     my $localtime = localtime();
-    if ( not defined( $opts->{percent} ) ) {
-        printf(
-            "\nTop %d Cryptoassets (by market cap) in %s ($localtime)\n\n",
-            $opts->{no}, uc( $opts->{symbol} ) );
-    }
-    else {
+
+    if ( defined( $opts->{percent} ) ) {
         printf(
             "\nTop %d Cryptoassets (by 24hr percentage >= %s%%) in %s ($localtime)\n\n",
             $opts->{no},
             int( $opts->{percent} ),
             uc( $opts->{symbol} )
         );
+    }
+    elsif ( defined( $opts->{ticker} ) ) {
+        printf(
+            "\nCryptoasset search for %s in %s ($localtime)\n\n",
+            uc( $opts->{ticker} ),
+            uc( $opts->{symbol} )
+        );
+    }
+    else {
+        printf(
+            "\nTop %d Cryptoassets (by market cap) in %s ($localtime)\n\n",
+            $opts->{no}, uc( $opts->{symbol} ) );
     }
 
     print
