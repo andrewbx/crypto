@@ -417,8 +417,8 @@ sub get_top_crypto {
 
         my $c_price = $item->{current_price} || 0;
 
-        my $f_price = $c_price < $OFFSET ? '%-14.6f' : '%-14.2f';
-        my $f_ath   = $c_ath < $OFFSET   ? '%-14.6f' : '%-14.2f';
+        my $f_price = $c_price < $OFFSET ? '%-14.8f' : '%-14.2f';
+        my $f_ath   = $c_ath < $OFFSET   ? '%-14.8f' : '%-14.2f';
 
         my $f_1hr   = colour( { value => $p_1hr } )   || q{};
         my $f_24hr  = colour( { value => $p_24hr } )  || q{};
