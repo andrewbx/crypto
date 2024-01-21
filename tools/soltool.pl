@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #--------------------------------------------------------------------------
 # Program     : soltool.pl
-# Version     : v1.6-STABLE-2023-12-31
+# Version     : v1.7-STABLE-2024-01-21
 # Description : Check Solana Contract & Pools Health
 # Syntax      : soltool.pl <option>
 # Author      : Andrew (andrew@devnull.uk)
@@ -28,7 +28,7 @@ $Data::Dumper::Sortkeys  = 0;
 
 binmode( STDOUT, ':encoding(UTF-8)' );
 
-our $VERSION = 'v1.6-STABLE';
+our $VERSION = 'v1.7-STABLE';
 my $RELEASE = "solTOOL $VERSION";
 
 my $PMP_POOL = 'https://pumpr.xyz/api';
