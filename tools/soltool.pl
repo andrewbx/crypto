@@ -97,7 +97,7 @@ my $EMOJIS
 
 sub help {
     printf( "
-\033[1m$RELEASE\033[0m - Retrieve solana smart contract information.
+\033[1m$RELEASE\033[0m - Retrieve solana contract & pools information.
 
 \033[1mUsage:\033[0m
   --drops                       List new drops
