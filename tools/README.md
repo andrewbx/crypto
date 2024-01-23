@@ -39,6 +39,10 @@ Coin Cap API Documentation     - https://docs.coincap.io/
 DEX Screener API Documentation - https://docs.dexscreener.com/api/reference
 ```
 
+## Screenshot
+
+![smctool.pl Example](images/example_smctool.png)
+
 ## soltool.pl - Check Solana Contract & Pools Health
 
 Run checks against launched Solana contracts and get their current health and liquidity pool status.
@@ -64,13 +68,19 @@ Options:
   --version                     Print version
 ```
 
+## Screenshot
+
+![soltool.pl Example](images/example_soltool.png)
+
 # Dependencies
 
 The tools will require the following modules for perl if not already installed.
 cpanfile is included in distribution for CPAN installation.
 
+```
 requires 'JSON';
 requires 'Readonly';
 requires 'Getopt::Long';
 requires 'MIME::Base64';
 requires 'LWP::UserAgent';
+```
