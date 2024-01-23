@@ -63,3 +63,14 @@ Options:
   --help                        Print this help information
   --version                     Print version
 ```
+
+# Dependencies
+
+The tools will require the following modules for perl if not already installed.
+cpanfile is included in distribution for CPAN installation.
+
+requires 'JSON';
+requires 'Readonly';
+requires 'Getopt::Long';
+requires 'MIME::Base64';
+requires 'LWP::UserAgent';

@@ -1,0 +1,5 @@
+requires 'JSON';
+requires 'Readonly';
+requires 'Getopt::Long';
+requires 'MIME::Base64';
+requires 'LWP::UserAgent';
