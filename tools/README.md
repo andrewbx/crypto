@@ -84,3 +84,24 @@ requires 'Getopt::Long';
 requires 'MIME::Base64';
 requires 'LWP::UserAgent';
 ```
+
+Package names if installing from a debian'ish or rpm'ish system (may differ based
+on distro release/application versions)
+
+Debian/Ubuntu
+```
+libjson-perl
+libreadonly-perl
+libgetopt-long-descriptive-perl
+libfile-mimeinfo-perl
+libwww-perl
+```
+
+RPM
+```
+perl-JSON
+perl-Readonly
+perl-Getopt-Long
+perl-File-MimeInfo
+perl-libwww-perl
+```
