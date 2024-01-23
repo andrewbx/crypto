@@ -41,7 +41,7 @@ DEX Screener API Documentation - https://docs.dexscreener.com/api/reference
 
 ## Screenshot
 
-![smctool.pl Example](images/example_smctool.png)
+![smctool.pl Example](images/example_smctool.jpg)
 
 ## soltool.pl - Check Solana Contract & Pools Health
 
@@ -70,7 +70,7 @@ Options:
 
 ## Screenshot
 
-![soltool.pl Example](images/example_soltool.png)
+![soltool.pl Example](images/example_soltool.jpg)
 
 # Dependencies
 
