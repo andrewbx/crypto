@@ -34,7 +34,7 @@ my $RELEASE = "smcTOOL $VERSION";
 my $GPL_URL = 'https://api.gopluslabs.io/api/v1';
 my $CGO_URL = 'https://api.coingecko.com/api/v3';
 my $CAP_URL = 'https://api.coincap.io/v2';
-my $DEX_URL = 'https://api.dexscreener.com/latest/dex';
+my $DEX_URL = 'https://api.dexscreener.com';
 my $LWP_UA  = 'Mozilla/5.0';
 my $DEBUG   = 0;
 
